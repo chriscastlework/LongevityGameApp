@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "app/auth/**/*",
+    "app/layout.tsx",
+    "app/page.tsx",
+    "components/auth/**/*",
+    "components/providers/**/*",
+    "components/ui/**/*",
+    "lib/auth/**/*",
+    "lib/supabase/**/*",
+    "lib/utils/**/*"
+  ],
+  "exclude": [
+    "tests/**/*",
+    "components/admin/**/*",
+    "components/competitions/**/*",
+    "app/competitions/**/*",
+    "lib/store/**/*",
+    "lib/hooks/useDeepLink.ts"
+  ]
+}

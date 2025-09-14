@@ -1,0 +1,89 @@
+{
+  "name": "Anywhere Competition App",
+  "short_name": "Anywhere",
+  "description": "Join competitions, track your progress, and compete with others in our modern PWA platform.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e293b",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "categories": ["games", "sports", "productivity"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.jpg",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-96x96.jpg",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-128x128.jpg",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-144x144.jpg",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-152x152.jpg",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-192x192.jpg",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-384x384.jpg",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512x512.jpg",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Competitions",
+      "short_name": "Competitions",
+      "description": "View all competitions",
+      "url": "/competitions",
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.jpg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "short_name": "Profile",
+      "description": "View your profile",
+      "url": "/profile",
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.jpg",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+}

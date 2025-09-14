@@ -1,0 +1,93 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Updated to proper Tailwind CSS v4 dark mode syntax */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Updated color scheme to better match the provided design image */
+  --background: #2a3441;
+  --foreground: #ffffff;
+  --card: #3a4553;
+  --card-foreground: #f8fafc;
+  --popover: rgba(0, 0, 0, 0.8);
+  --popover-foreground: #ffffff;
+  --primary: #4f9cf9;
+  --primary-foreground: #ffffff;
+  --secondary: #4a5568;
+  --secondary-foreground: #f8fafc;
+  --muted: #3a4553;
+  --muted-foreground: #cbd5e0;
+  --accent: #4f9cf9;
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #4a5568;
+  --input: #3a4553;
+  --ring: rgba(79, 156, 249, 0.4);
+  --chart-1: #4f9cf9;
+  --chart-2: #2a3441;
+  --chart-3: #3a4553;
+  --chart-4: #f8fafc;
+  --chart-5: #dc2626;
+  --radius: 0.75rem;
+  --sidebar: #2a3441;
+  --sidebar-foreground: #f8fafc;
+  --sidebar-primary: #4f9cf9;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #4f9cf9;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #4a5568;
+  --sidebar-ring: rgba(79, 156, 249, 0.4);
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    /* Removed all @apply dark references that were causing the error */
+    @apply bg-background text-foreground;
+  }
+}
