@@ -133,6 +133,47 @@ export interface Database {
         Relationships: []
       }
 
+      // Stations table
+      stations: {
+        Row: {
+          id: string // UUID in the actual database
+          name: string
+          description: string
+          station_type?: StationType // Maps to our expected types
+          icon_name?: string
+          color_class?: string
+          is_active?: boolean
+          sort_order?: number
+          created_at: string
+          updated_at?: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description: string
+          station_type?: StationType
+          icon_name?: string
+          color_class?: string
+          is_active?: boolean
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string
+          station_type?: StationType
+          icon_name?: string
+          color_class?: string
+          is_active?: boolean
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+
       // Competition entries table
       competition_entries: {
         Row: {
@@ -233,6 +274,11 @@ export type CompetitionUpdate = Database['public']['Tables']['competitions']['Up
 export type CompetitionEntry = Database['public']['Tables']['competition_entries']['Row']
 export type CompetitionEntryInsert = Database['public']['Tables']['competition_entries']['Insert']
 export type CompetitionEntryUpdate = Database['public']['Tables']['competition_entries']['Update']
+
+// Station types
+export type Station = Database['public']['Tables']['stations']['Row']
+export type StationInsert = Database['public']['Tables']['stations']['Insert']
+export type StationUpdate = Database['public']['Tables']['stations']['Update']
 
 // Station and measurement types
 export type StationType = 'balance' | 'breath' | 'grip' | 'health';

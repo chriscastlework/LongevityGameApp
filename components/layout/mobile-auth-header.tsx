@@ -14,16 +14,7 @@ import {
 } from "@/components/ui/sheet";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { useAuthContext } from "@/components/providers/auth-provider";
-import {
-  Menu,
-  Trophy,
-  Users,
-  Activity,
-  User,
-  Settings,
-  Home,
-  QrCode,
-} from "lucide-react";
+import { Menu, Users, User, Settings, QrCode } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigationItems = [

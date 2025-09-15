@@ -14,34 +14,6 @@ export default function HomePage() {
         }}
       />
 
-      {/* Navigation */}
-      <div className="absolute top-6 left-6 right-6 z-20">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-              <div className="w-4 h-4 bg-primary-foreground rounded-full" />
-            </div>
-            <span className="text-xl font-semibold text-foreground">
-              The Longevity Fitness Games.
-            </span>
-          </div>
-          <nav className="flex items-center gap-6">
-            <Link
-              href="/"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Home
-            </Link>
-            <Link
-              href="/auth/login"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Join
-            </Link>
-          </nav>
-        </div>
-      </div>
-
       {/* Content */}
       <div className="relative z-10 text-center space-y-8">
         <div className="space-y-4">

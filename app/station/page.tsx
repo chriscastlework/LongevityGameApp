@@ -6,42 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AuthenticatedLayout } from "@/components/layout/authenticated-layout";
-import { Activity, Heart, Zap, Scale, QrCode, Users } from "lucide-react";
+import { QrCode, Users } from "lucide-react";
 
 import { QRScanner } from "@/components/station/qr-scanner";
 import { StationEntryForm } from "@/components/station/station-entry-form";
+import { useStations } from "@/lib/hooks/useStations";
+import { getIconByName } from "@/lib/utils/icons";
 import type { StationType } from "@/lib/types/database";
-
-const stations = [
-  {
-    id: "balance" as StationType,
-    name: "Balance Test",
-    icon: Scale,
-    description: "Measure balance and stability",
-    color: "bg-blue-500",
-  },
-  {
-    id: "breath" as StationType,
-    name: "Breath Hold",
-    icon: Activity,
-    description: "Test respiratory endurance",
-    color: "bg-green-500",
-  },
-  {
-    id: "grip" as StationType,
-    name: "Grip Strength",
-    icon: Zap,
-    description: "Measure hand/forearm strength",
-    color: "bg-yellow-500",
-  },
-  {
-    id: "health" as StationType,
-    name: "Health Metrics",
-    icon: Heart,
-    description: "Comprehensive health measurements",
-    color: "bg-red-500",
-  },
-];
 
 // Mock operator data
 const mockOperator = {
@@ -52,11 +23,12 @@ const mockOperator = {
 };
 
 export default function StationOperatorPage() {
+  const { data: stations, isLoading: stationsLoading, error: stationsError } = useStations();
   const [selectedStation, setSelectedStation] = useState<StationType>(mockOperator.station);
   const [scannedParticipant, setScannedParticipant] = useState<any>(null);
   const [showScanner, setShowScanner] = useState(false);
 
-  const currentStation = stations.find(s => s.id === selectedStation);
+  const currentStation = stations?.find(s => s.id === selectedStation);
 
   const handleQRScan = (data: string) => {
     try {

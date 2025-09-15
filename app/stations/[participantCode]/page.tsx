@@ -6,52 +6,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AuthenticatedLayout } from "@/components/layout/authenticated-layout";
-import { Activity, Heart, Zap, Scale, Users, CheckCircle } from "lucide-react";
+import { Users, CheckCircle } from "lucide-react";
 import { StationEntryForm } from "@/components/station/station-entry-form";
 import { useAuthContext } from "@/components/providers/auth-provider";
 import { isOperator } from "@/lib/auth/useApiAuth";
+import { useStations } from "@/lib/hooks/useStations";
+import { useParticipant } from "@/lib/hooks/useParticipant";
+import { getIconByName } from "@/lib/utils/icons";
 import type { StationType } from "@/lib/types/database";
-
-const stations = [
-  {
-    id: "balance" as StationType,
-    name: "Balance Test",
-    icon: Scale,
-    description: "Measure balance and stability",
-    color: "bg-blue-500",
-  },
-  {
-    id: "breath" as StationType,
-    name: "Breath Hold",
-    icon: Activity,
-    description: "Test respiratory endurance",
-    color: "bg-green-500",
-  },
-  {
-    id: "grip" as StationType,
-    name: "Grip Strength",
-    icon: Zap,
-    description: "Measure hand/forearm strength",
-    color: "bg-yellow-500",
-  },
-  {
-    id: "health" as StationType,
-    name: "Health Metrics",
-    icon: Heart,
-    description: "Comprehensive health measurements",
-    color: "bg-red-500",
-  },
-];
 
 export default function StationParticipantPage() {
   const params = useParams();
   const router = useRouter();
   const participantCode = params.participantCode as string;
   const { isAuthenticated, isLoading, user, profile } = useAuthContext();
+  const { data: stations, isLoading: stationsLoading, error: stationsError } = useStations();
+  const { data: participant, isLoading: participantLoading, error: participantError } = useParticipant(participantCode);
   const [selectedStation, setSelectedStation] = useState<StationType | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  const currentStation = selectedStation ? stations.find(s => s.id === selectedStation) : null;
+  const currentStation = selectedStation && stations ? stations.find(s => s.station_type === selectedStation) : null;
 
   // Redirect to login if not authenticated, preserving the current URL
   useEffect(() => {
@@ -154,9 +128,27 @@ export default function StationParticipantPage() {
               Station Entry
             </h1>
           </div>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            Participant: <Badge variant="secondary" className="text-lg px-3 py-1 ml-2">{participantCode}</Badge>
-          </p>
+          <div className="space-y-2">
+            <p className="text-lg text-gray-600 dark:text-gray-300">
+              Participant: <Badge variant="secondary" className="text-lg px-3 py-1 ml-2">{participantCode}</Badge>
+            </p>
+            {participantLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center">
+                  <div className="w-2 h-2 bg-primary-foreground rounded-full" />
+                </div>
+                Loading participant info...
+              </div>
+            ) : participantError ? (
+              <p className="text-sm text-red-500">
+                Could not load participant information
+              </p>
+            ) : participant ? (
+              <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                {participant.profiles.name}
+              </p>
+            ) : null}
+          </div>
         </div>
 
         {submitted ? (
@@ -177,33 +169,46 @@ export default function StationParticipantPage() {
               <CardHeader className="text-center">
                 <CardTitle>Select Your Station</CardTitle>
                 <CardDescription>
-                  Choose the station you are operating to enter scores for participant {participantCode}
+                  Choose the station you are operating to enter scores for {participant ? participant.profiles.name : participantCode}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {stations.map((station) => {
-                    const IconComponent = station.icon;
-                    return (
-                      <Button
-                        key={station.id}
-                        variant="outline"
-                        onClick={() => handleStationSelect(station.id)}
-                        className="h-auto p-6 flex flex-col items-center gap-4 hover:bg-muted/50"
-                      >
-                        <div className={`p-4 rounded-full ${station.color} text-white`}>
-                          <IconComponent className="h-8 w-8" />
-                        </div>
-                        <div className="text-center">
-                          <h3 className="font-semibold text-lg">{station.name}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {station.description}
-                          </p>
-                        </div>
-                      </Button>
-                    );
-                  })}
-                </div>
+                {stationsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mx-auto mb-2">
+                      <div className="w-4 h-4 bg-primary-foreground rounded-full" />
+                    </div>
+                    <div className="text-sm text-muted-foreground">Loading stations...</div>
+                  </div>
+                ) : stationsError ? (
+                  <div className="text-center py-8 text-red-500">
+                    Failed to load stations. Please refresh the page.
+                  </div>
+                ) : (
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {stations?.map((station) => {
+                      const IconComponent = getIconByName(station.icon_name);
+                      return (
+                        <Button
+                          key={station.id}
+                          variant="outline"
+                          onClick={() => handleStationSelect(station.station_type)}
+                          className="h-auto p-6 flex flex-col items-center gap-4 hover:bg-muted/50"
+                        >
+                          <div className={`p-4 rounded-full ${station.color_class} text-white`}>
+                            <IconComponent className="h-8 w-8" />
+                          </div>
+                          <div className="text-center">
+                            <h3 className="font-semibold text-lg">{station.name}</h3>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {station.description}
+                            </p>
+                          </div>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -212,15 +217,22 @@ export default function StationParticipantPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-full ${currentStation?.color} text-white`}>
-                    {currentStation && <currentStation.icon className="h-6 w-6" />}
-                  </div>
-                  <div>
-                    <CardTitle>{currentStation?.name} Station</CardTitle>
-                    <CardDescription>
-                      Enter measurements for participant {participantCode}
-                    </CardDescription>
-                  </div>
+                  {currentStation && (
+                    <>
+                      <div className={`p-3 rounded-full ${currentStation.color_class} text-white`}>
+                        {(() => {
+                          const IconComponent = getIconByName(currentStation.icon_name);
+                          return <IconComponent className="h-6 w-6" />;
+                        })()}
+                      </div>
+                      <div>
+                        <CardTitle>{currentStation.name} Station</CardTitle>
+                        <CardDescription>
+                          Enter measurements for {participant ? participant.profiles.name : participantCode}
+                        </CardDescription>
+                      </div>
+                    </>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>

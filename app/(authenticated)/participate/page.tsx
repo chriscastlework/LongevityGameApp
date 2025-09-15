@@ -8,46 +8,18 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AuthenticatedLayout } from "@/components/layout/authenticated-layout";
-import { Activity, Heart, Zap, Scale, Mail, CheckCircle } from "lucide-react";
+import { Mail, CheckCircle } from "lucide-react";
 import { useAuthContext } from "@/components/providers/auth-provider";
 import { useSearchParams, useRouter } from "next/navigation";
-
-const stations = [
-  {
-    id: "balance",
-    name: "Balance Test",
-    icon: Scale,
-    description: "Test your balance and stability",
-    color: "bg-blue-500",
-  },
-  {
-    id: "breath",
-    name: "Breath Hold",
-    icon: Activity,
-    description: "Measure your respiratory endurance",
-    color: "bg-green-500",
-  },
-  {
-    id: "grip",
-    name: "Grip Strength",
-    icon: Zap,
-    description: "Test your hand and forearm strength",
-    color: "bg-yellow-500",
-  },
-  {
-    id: "health",
-    name: "Health Metrics",
-    icon: Heart,
-    description: "Comprehensive health measurements",
-    color: "bg-red-500",
-  },
-];
+import { useStations } from "@/lib/hooks/useStations";
+import { getIconByName } from "@/lib/utils/icons";
 
 export default function ParticipatePage() {
   const { user, profile, refreshUser } = useAuthContext();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [qrValue, setQrValue] = useState("");
+  const { data: stations, isLoading: stationsLoading, error: stationsError } = useStations();
 
   // Check if user's email is confirmed
   const isEmailConfirmed = user?.email_confirmed_at != null;
@@ -234,30 +206,43 @@ export default function ParticipatePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4">
-                  {stations.map((station) => {
-                    const IconComponent = station.icon;
-                    return (
-                      <div
-                        key={station.id}
-                        className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                      >
-                        <div className={`p-3 rounded-full ${station.color} text-white`}>
-                          <IconComponent className="h-6 w-6" />
+                {stationsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mx-auto mb-2">
+                      <div className="w-4 h-4 bg-primary-foreground rounded-full" />
+                    </div>
+                    <div className="text-sm text-muted-foreground">Loading stations...</div>
+                  </div>
+                ) : stationsError ? (
+                  <div className="text-center py-8 text-red-500">
+                    Failed to load stations. Please refresh the page.
+                  </div>
+                ) : (
+                  <div className="grid gap-4">
+                    {stations?.map((station) => {
+                      const IconComponent = getIconByName(station.icon_name);
+                      return (
+                        <div
+                          key={station.id}
+                          className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <div className={`p-3 rounded-full ${station.color_class} text-white`}>
+                            <IconComponent className="h-6 w-6" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold">{station.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {station.description}
+                            </p>
+                          </div>
+                          <Badge variant="outline">
+                            {isEmailConfirmed ? "Ready" : "Confirm Email"}
+                          </Badge>
                         </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{station.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {station.description}
-                          </p>
-                        </div>
-                        <Badge variant="outline">
-                          {isEmailConfirmed ? "Ready" : "Confirm Email"}
-                        </Badge>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
