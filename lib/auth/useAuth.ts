@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createBrowserClient } from "@/lib/supabase/client";
+import type { ParticipantProfileInsert, SignupFormData } from "@/lib/types/database";
 
 // Fetch current user session/profile
 export function useAuthQuery() {
@@ -61,7 +62,70 @@ export function useLoginMutation() {
   });
 }
 
-// Signup mutation
+// Participant signup mutation - works with existing database schema
+export function useParticipantSignupMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (formData: SignupFormData) => {
+      const supabase = createBrowserClient();
+
+      // Only create auth user if email and password are provided
+      if (formData.email && formData.password) {
+        // Create auth user
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              full_name: formData.fullName,
+            },
+          },
+        });
+        if (authError) throw authError;
+        if (!authData.user) throw new Error("No user returned from auth signup");
+
+        // Create profile record with the user's ID
+        const profileData: ParticipantProfileInsert = {
+          id: authData.user.id,
+          name: formData.fullName,
+          email: formData.email,
+          date_of_birth: formData.dateOfBirth,
+          gender: formData.gender,
+          job_title: formData.jobTitle,
+          organisation: formData.organization, // Convert American to British spelling
+        };
+
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .insert([profileData])
+          .select()
+          .single();
+
+        if (profileError) throw profileError;
+
+        // Create participant record linking to the auth user
+        const { data: participant, error: participantError } = await supabase
+          .from("participants")
+          .insert([{ user_id: authData.user.id }])
+          .select()
+          .single();
+
+        if (participantError) throw participantError;
+
+        return { user: authData.user, profile, participant };
+      } else {
+        // For users without email/password, we can't create profiles
+        // since they require auth user ID due to foreign key constraint
+        throw new Error("Email and password are required for signup");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
+    },
+  });
+}
+
+// Legacy signup mutation (keep for backward compatibility)
 export function useSignupMutation() {
   const queryClient = useQueryClient();
   return useMutation({

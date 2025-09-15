@@ -3,7 +3,7 @@
 import React, { Suspense } from "react";
 import { useAuthContext } from "@/components/providers/auth-provider";
 import { AuthRedirect } from "@/components/auth/auth-redirect";
-import { EnhancedSignupForm } from "@/components/auth/enhanced-signup-form";
+import { ParticipantSignupForm } from "@/components/auth/participant-signup-form";
 import { DeepLinkProvider } from "@/components/auth/deep-link-provider";
 import Link from "next/link";
 
@@ -57,14 +57,7 @@ export default function SignupPage() {
 
         {/* Content */}
         <div className="relative z-10 w-full max-w-md p-6">
-          <div className="mb-8">
-            <p className="text-sm text-muted-foreground mb-2">START FOR FREE</p>
-            <h1 className="text-4xl font-bold text-foreground mb-4">
-              Create new account<span className="text-primary">.</span>
-            </h1>
-          </div>
-
-          <EnhancedSignupForm />
+          <ParticipantSignupForm />
         </div>
       </div>
     </DeepLinkProvider>

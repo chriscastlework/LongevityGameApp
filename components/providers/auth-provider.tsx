@@ -1,11 +1,12 @@
 "use client";
 
-import React, { createContext, useContext } from "react";
-import { useAuthQuery } from "@/lib/auth/useAuth";
+import React, { createContext, useContext, useEffect } from "react";
+import { useAuthQuery, initializeAuth } from "@/lib/auth/useApiAuth";
 
 interface AuthContextType {
   user: any;
   profile: any;
+  participant: any;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: any;
@@ -15,9 +16,15 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  // Initialize auth token from localStorage on mount
+  useEffect(() => {
+    initializeAuth();
+  }, []);
+
   const { data, isLoading, error, refetch } = useAuthQuery();
   const user = data?.user || null;
   const profile = data?.profile || null;
+  const participant = data?.participant || null;
   const isAuthenticated = !!user;
 
   const refreshUser = () => {
@@ -26,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, profile, isAuthenticated, isLoading, error, refreshUser }}
+      value={{ user, profile, participant, isAuthenticated, isLoading, error, refreshUser }}
     >
       {children}
     </AuthContext.Provider>

@@ -3,7 +3,7 @@
 import React, { Suspense } from "react";
 import { useAuthContext } from "@/components/providers/auth-provider";
 import { AuthRedirect } from "@/components/auth/auth-redirect";
-import { EnhancedLoginForm } from "@/components/auth/enhanced-login-form";
+import { LoginForm } from "@/components/auth/login-form";
 import { DeepLinkProvider } from "@/components/auth/deep-link-provider";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
@@ -67,7 +67,7 @@ export default function LoginPage() {
                 {/* Enhanced form includes its own header */}
               </CardHeader>
               <CardContent>
-                <EnhancedLoginForm />
+                <LoginForm />
               </CardContent>
             </Card>
           </div>

@@ -1,39 +1,80 @@
-import { createClient as createSupabaseClient } from "@supabase/supabase-js"
-import { cookies } from "next/headers"
+import { createServerClient, serializeCookieHeader } from '@supabase/ssr'
+import { createClient } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
+import type { NextRequest, NextResponse } from 'next/server'
+import type { Database } from "@/lib/types/database";
 
-export async function createServerClient() {
-  const cookieStore = await cookies()
+// Server client for API routes with proper cookie handling
+export async function createRouteHandlerClient() {
+  const cookieStore = await cookies();
 
-  return createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
-    auth: {
-      storage: {
-        getItem: (key: string) => {
-          const cookie = cookieStore.get(key)
-          return cookie?.value || null
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
         },
-        setItem: (key: string, value: string) => {
-          try {
-            cookieStore.set(key, value, {
-              httpOnly: true,
-              secure: process.env.NODE_ENV === 'production',
-              sameSite: "lax",
-              path: "/",
-              maxAge: 60 * 60 * 24 * 7 // 7 days
-            })
-          } catch {
-            // Ignore errors in server components
-          }
-        },
-        removeItem: (key: string) => {
-          try {
-            cookieStore.delete(key)
-          } catch {
-            // Ignore errors in server components
-          }
-        },
-      },
-    },
-  })
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options)
+          })
+        }
+      }
+    }
+  )
 }
 
-export const createClient = createServerClient
+// Server client for middleware/request-response cycle
+export function createMiddlewareClient(
+  request: NextRequest,
+  response: NextResponse
+) {
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            const cookieString = serializeCookieHeader(name, value, options)
+            response.headers.append('Set-Cookie', cookieString)
+          })
+        }
+      }
+    }
+  )
+}
+
+// Admin client with service role key for database operations
+export function createAdminClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error("Missing Supabase environment variables");
+  }
+
+  return createClient<Database>(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
+
+// Regular client for user authentication (uses anon key)
+export async function createAuthClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Missing Supabase environment variables");
+  }
+
+  return createClient<Database>(supabaseUrl, supabaseAnonKey);
+}
