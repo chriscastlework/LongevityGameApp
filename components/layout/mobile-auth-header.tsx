@@ -95,8 +95,8 @@ export function MobileAuthHeader({
 
           {/* Desktop Navigation - Hidden on mobile */}
           <nav className="hidden lg:flex items-center gap-6">
-            {navigationItems.slice(1, -1).map((item) => {
-              // Skip Home and Profile for desktop
+            {navigationItems.map((item) => {
+              // Show all navigation items for desktop
               const Icon = item.icon;
               const isActive =
                 pathname === item.href ||

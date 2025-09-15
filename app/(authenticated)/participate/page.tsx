@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AuthenticatedLayout } from "@/components/layout/authenticated-layout";
 import { RefreshCw, Activity, Heart, Zap, Scale, Mail, CheckCircle } from "lucide-react";
 import { useAuthContext } from "@/components/providers/auth-provider";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 
 const stations = [
   {
@@ -46,6 +46,7 @@ const stations = [
 export default function ParticipatePage() {
   const { user, profile, refreshUser } = useAuthContext();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [qrValue, setQrValue] = useState("");
 
@@ -374,6 +375,7 @@ export default function ParticipatePage() {
                   <Button
                     className="flex-1"
                     disabled={!isEmailConfirmed}
+                    onClick={() => router.push('/leaderboard')}
                   >
                     View Leaderboard
                   </Button>
@@ -381,6 +383,7 @@ export default function ParticipatePage() {
                     variant="outline"
                     className="flex-1"
                     disabled={!isEmailConfirmed}
+                    onClick={() => router.push('/profile')}
                   >
                     My Results
                   </Button>

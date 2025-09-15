@@ -9,6 +9,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { useAuthContext } from "@/components/providers/auth-provider"
 import { useLoginMutation, useSignupMutation } from "./useAuth"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { useQueryClient } from "@tanstack/react-query"
 import {
   isValidRedirectUrl,
   isValidCompetitionId,
@@ -367,15 +368,19 @@ export function useCompetitionAuth(competitionId?: string) {
  */
 export function useLogout() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [isLoading, setIsLoading] = useState(false)
 
-  const logout = useCallback(async (redirectTo = '/competitions') => {
+  const logout = useCallback(async (redirectTo = '/auth/login') => {
     setIsLoading(true)
-    
+
     try {
       const supabase = createBrowserClient()
       await supabase.auth.signOut()
-      
+
+      // Clear React Query cache
+      queryClient.clear()
+
       // Clear any stored auth context
       Object.values(['auth_redirect_url', 'auth_competition_id', 'auth_flow', 'oauth_state', 'auth_context_backup']).forEach(key => {
         try {
@@ -385,14 +390,14 @@ export function useLogout() {
           console.warn(`Failed to clear ${key}:`, error)
         }
       })
-      
+
       router.push(redirectTo)
     } catch (error) {
       console.error('Logout failed:', error)
     } finally {
       setIsLoading(false)
     }
-  }, [router])
+  }, [router, queryClient])
 
   return {
     logout,
