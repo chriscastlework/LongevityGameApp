@@ -22,6 +22,7 @@ export function LogoutButton({
   const { logout, isLoading } = useLogout();
 
   const handleLogout = () => {
+    console.log("Logout button clicked");
     logout("/auth/login"); // Redirect to login page after logout
   };
 

@@ -372,16 +372,24 @@ export function useLogout() {
   const [isLoading, setIsLoading] = useState(false)
 
   const logout = useCallback(async (redirectTo = '/auth/login') => {
+    console.log("Logout function called with redirect:", redirectTo)
     setIsLoading(true)
 
     try {
+      console.log("Starting logout process...")
       const supabase = createBrowserClient()
-      await supabase.auth.signOut()
+      const result = await supabase.auth.signOut()
+      console.log("Supabase signOut result:", result)
 
       // Clear React Query cache
+      console.log("Clearing React Query cache...")
       queryClient.clear()
 
+      // Specifically invalidate auth queries
+      queryClient.invalidateQueries({ queryKey: ["auth"] })
+
       // Clear any stored auth context
+      console.log("Clearing stored auth context...")
       Object.values(['auth_redirect_url', 'auth_competition_id', 'auth_flow', 'oauth_state', 'auth_context_backup']).forEach(key => {
         try {
           localStorage.removeItem(key)
@@ -391,11 +399,19 @@ export function useLogout() {
         }
       })
 
-      router.push(redirectTo)
+      console.log("Redirecting to:", redirectTo)
+
+      // Force a hard redirect to ensure complete logout
+      if (typeof window !== 'undefined') {
+        window.location.href = redirectTo
+      } else {
+        router.push(redirectTo)
+      }
     } catch (error) {
       console.error('Logout failed:', error)
     } finally {
       setIsLoading(false)
+      console.log("Logout process completed")
     }
   }, [router, queryClient])
 
