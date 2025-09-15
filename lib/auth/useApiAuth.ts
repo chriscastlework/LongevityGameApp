@@ -1,140 +1,158 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { AuthAPI, type SignupData, type LoginCredentials, type AuthResponse } from "@/lib/api/auth";
+import { createBrowserClient } from "@/lib/supabase/client";
+import type { UserRole } from "@/lib/types/database";
 
-// Auth query using API instead of direct Supabase
+// Fetch current user session/profile (moved from useAuth.ts)
 export function useAuthQuery() {
   return useQuery({
     queryKey: ["auth", "session"],
     queryFn: async () => {
-      try {
-        const response = await AuthAPI.getSession();
-        return response.data || { user: null, profile: null, participant: null };
-      } catch (error: any) {
-        // If session validation fails, user is not authenticated
-        console.log("Session validation failed:", error.message);
-        return { user: null, profile: null, participant: null };
+      const supabase = createBrowserClient();
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+      if (error) throw error;
+      if (!user) return { user: null, profile: null };
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+      return { user, profile: profileError ? null : profile };
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+}
+
+// Initialize auth (placeholder function)
+export function initializeAuth() {
+  // This can be used to initialize auth state from localStorage if needed
+  console.log("Auth initialized");
+}
+
+// Get current user's role
+export function useCurrentUserRole() {
+  return useQuery({
+    queryKey: ["auth", "role"],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/roles');
+      if (!response.ok) {
+        throw new Error('Failed to fetch user role');
       }
+      const data = await response.json();
+      return data.data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 1,
-    // Only refetch if we don't have user data
-    enabled: true,
   });
 }
 
-// Login mutation using API
-export function useLoginMutation() {
+// Update a user's role (admin only)
+export function useUpdateUserRole() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (credentials: LoginCredentials) => {
-      const response = await AuthAPI.login(credentials);
-      return response;
-    },
-    onSuccess: (data) => {
-      // Store access token
-      if (data.data?.session?.access_token) {
-        AuthAPI.setAccessToken(data.data.session.access_token);
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: UserRole }) => {
+      const response = await fetch('/api/admin/roles', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, newRole }),
+      });
 
-        // Store in localStorage for persistence (optional)
-        localStorage.setItem('access_token', data.data.session.access_token);
-        if (data.data.session.refresh_token) {
-          localStorage.setItem('refresh_token', data.data.session.refresh_token);
-        }
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update user role');
       }
 
-      // Invalidate and refetch session data
-      queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
-    },
-    onError: (error) => {
-      console.error("Login error:", error);
-    },
-  });
-}
-
-// Signup mutation using API
-export function useSignupMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (signupData: SignupData) => {
-      const response = await AuthAPI.signup(signupData);
-      return response;
-    },
-    onSuccess: (data) => {
-      // Store access token if provided
-      if (data.data?.session?.access_token) {
-        AuthAPI.setAccessToken(data.data.session.access_token);
-
-        // Store in localStorage for persistence
-        localStorage.setItem('access_token', data.data.session.access_token);
-        if (data.data.session.refresh_token) {
-          localStorage.setItem('refresh_token', data.data.session.refresh_token);
-        }
-      }
-
-      // Invalidate and refetch session data
-      queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
-    },
-    onError: (error) => {
-      console.error("Signup error:", error);
-    },
-  });
-}
-
-// Logout mutation using API
-export function useLogoutMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async () => {
-      const response = await AuthAPI.logout();
-      return response;
+      return response.json();
     },
     onSuccess: () => {
-      // Clear local storage
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-
-      // Clear auth state
-      queryClient.setQueryData(["auth", "session"], { user: null, profile: null, participant: null });
-      queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
-    },
-    onError: (error) => {
-      console.error("Logout error:", error);
-
-      // Even if logout fails, clear local state
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      queryClient.setQueryData(["auth", "session"], { user: null, profile: null, participant: null });
+      // Invalidate and refetch user lists and role queries
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      queryClient.invalidateQueries({ queryKey: ["auth", "role"] });
     },
   });
 }
 
-// Initialize auth state on app load
-export function initializeAuth() {
-  const token = localStorage.getItem('access_token');
-  if (token) {
-    AuthAPI.setAccessToken(token);
-  }
+// Get all users (admin/operator only)
+export function useAdminUsers({
+  page = 1,
+  limit = 50,
+  role,
+  search,
+}: {
+  page?: number;
+  limit?: number;
+  role?: UserRole;
+  search?: string;
+} = {}) {
+  return useQuery({
+    queryKey: ["admin", "users", page, limit, role, search],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+
+      if (role) params.set('role', role);
+      if (search) params.set('search', search);
+
+      const response = await fetch(`/api/admin/users?${params}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+
+      return response.json();
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
 }
 
-// Helper hook to get auth state
-export function useAuth() {
-  const { data, isLoading, error } = useAuthQuery();
+// Role-based permission utilities
+export function hasPermission(userRole: UserRole | null, requiredRole: UserRole): boolean {
+  if (!userRole) return false;
 
-  return {
-    user: data?.user || null,
-    profile: data?.profile || null,
-    participant: data?.participant || null,
-    isAuthenticated: !!data?.user,
-    isLoading,
-    error,
+  const roleHierarchy: Record<UserRole, number> = {
+    participant: 1,
+    operator: 2,
+    admin: 3,
   };
+
+  return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
 }
 
-// Keep original hooks for backward compatibility but mark as deprecated
-/**
- * @deprecated Use useSignupMutation instead
- */
-export const useParticipantSignupMutation = useSignupMutation;
+export function isAdmin(userRole: UserRole | null): boolean {
+  return userRole === 'admin';
+}
+
+export function isOperator(userRole: UserRole | null): boolean {
+  return userRole === 'operator' || userRole === 'admin';
+}
+
+export function isParticipant(userRole: UserRole | null): boolean {
+  return userRole === 'participant';
+}
+
+// Refresh user claims manually
+export function useRefreshClaims() {
+  return useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/auth/hooks/set-claims', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to refresh claims');
+      }
+
+      return response.json();
+    },
+  });
+}

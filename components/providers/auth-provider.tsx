@@ -1,7 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useEffect } from "react";
-import { useAuthQuery, initializeAuth } from "@/lib/auth/useApiAuth";
+import { useAuthQuery } from "@/lib/auth/useAuth";
+import { initializeAuth } from "@/lib/auth/useApiAuth";
 
 interface AuthContextType {
   user: any;
@@ -24,7 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data, isLoading, error, refetch } = useAuthQuery();
   const user = data?.user || null;
   const profile = data?.profile || null;
-  const participant = data?.participant || null;
+  const participant = null; // Note: participant data is separate from profile
   const isAuthenticated = !!user;
 
   const refreshUser = () => {

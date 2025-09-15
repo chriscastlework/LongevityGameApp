@@ -1,10 +1,8 @@
 "use client";
 
-import { useLogoutMutation } from "@/lib/auth/useApiAuth";
+import { useLogout } from "@/lib/auth/auth-hooks";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 interface LogoutButtonProps {
   variant?: "default" | "outline" | "ghost";
@@ -21,27 +19,10 @@ export function LogoutButton({
   children,
   className
 }: LogoutButtonProps) {
-  const router = useRouter();
-  const logoutMutation = useLogoutMutation();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { logout, isLoading } = useLogout();
 
-  const handleLogout = async () => {
-    if (isLoggingOut) return;
-
-    try {
-      setIsLoggingOut(true);
-      await logoutMutation.mutateAsync();
-
-      // Redirect to home page after successful logout
-      router.push("/");
-    } catch (error) {
-      console.error("Logout failed:", error);
-      // Even if logout fails on server, we cleared local state
-      // So still redirect to home
-      router.push("/");
-    } finally {
-      setIsLoggingOut(false);
-    }
+  const handleLogout = () => {
+    logout("/"); // Redirect to home page after logout
   };
 
   return (
@@ -49,11 +30,11 @@ export function LogoutButton({
       variant={variant}
       size={size}
       onClick={handleLogout}
-      disabled={isLoggingOut}
+      disabled={isLoading}
       className={className}
     >
       {showIcon && <LogOut className="w-4 h-4 mr-2" />}
-      {children || (isLoggingOut ? "Logging out..." : "Logout")}
+      {children || (isLoading ? "Logging out..." : "Logout")}
     </Button>
   );
 }

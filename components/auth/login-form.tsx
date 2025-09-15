@@ -10,7 +10,7 @@ import { Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useLoginMutation } from "@/lib/auth/useApiAuth";
+import { useLoginMutation } from "@/lib/auth/useAuth";
 import {
   Form,
   FormControl,

@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { useSignupMutation } from "@/lib/auth/useApiAuth";
+import { useParticipantSignupMutation } from "@/lib/auth/useAuth";
 import {
   Form,
   FormControl,
@@ -125,7 +125,7 @@ export function ParticipantSignupForm({
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const signupMutation = useSignupMutation();
+  const signupMutation = useParticipantSignupMutation();
 
   const form = useForm<ParticipantSignupFormData>({
     resolver: zodResolver(participantSignupSchema),

@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
         gender: gender as "male" | "female",
         job_title: jobTitle,
         organisation: organization, // Convert American to British spelling
-        is_admin: false, // Default to false for new signups
+        role: 'participant', // Default role for new signups
       };
 
       console.log("Creating profile...");
@@ -171,6 +171,12 @@ export async function POST(request: NextRequest) {
       }
 
       console.log("Participant created:", participant?.id);
+
+      // Set the session in cookies for the user
+      const supabaseForSession = await createRouteHandlerClient();
+      if (authData.session) {
+        await supabaseForSession.auth.setSession(authData.session);
+      }
 
       // Return success response with user data
       return NextResponse.json({

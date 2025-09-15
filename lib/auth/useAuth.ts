@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createBrowserClient } from "@/lib/supabase/client";
-import type { ParticipantProfileInsert, SignupFormData } from "@/lib/types/database";
+import type { ParticipantProfileInsert, SignupFormData, UserRole } from "@/lib/types/database";
 
 // Fetch current user session/profile
 export function useAuthQuery() {
@@ -24,6 +24,40 @@ export function useAuthQuery() {
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
+}
+
+// Role-based access utilities
+export function useUserRole() {
+  const { data: authData } = useAuthQuery();
+  return authData?.profile?.role || null;
+}
+
+export function useHasRole(requiredRole: UserRole) {
+  const userRole = useUserRole();
+  if (!userRole) return false;
+
+  // Role hierarchy: admin > operator > participant
+  const roleHierarchy: Record<UserRole, number> = {
+    participant: 1,
+    operator: 2,
+    admin: 3,
+  };
+
+  return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
+}
+
+export function useIsAdmin() {
+  return useHasRole('admin');
+}
+
+export function useIsOperator() {
+  const userRole = useUserRole();
+  return userRole === 'operator' || userRole === 'admin';
+}
+
+export function useIsParticipant() {
+  const userRole = useUserRole();
+  return userRole === 'participant';
 }
 
 // Login mutation
@@ -56,68 +90,53 @@ export function useLoginMutation() {
       } catch {}
       return { user: data.user, profile };
     },
-    onSuccess: () => {
+    onSuccess: async (result) => {
+      // Refresh claims after successful login
+      try {
+        await fetch('/api/auth/hooks/set-claims', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      } catch (error) {
+        console.warn('Failed to refresh claims:', error);
+      }
+
       queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
     },
   });
 }
 
-// Participant signup mutation - works with existing database schema
+// Participant signup mutation - uses server-side API for proper auth handling
 export function useParticipantSignupMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (formData: SignupFormData) => {
-      const supabase = createBrowserClient();
-
-      // Only create auth user if email and password are provided
-      if (formData.email && formData.password) {
-        // Create auth user
-        const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Call the server-side signup API that handles everything in one transaction
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName: formData.fullName,
           email: formData.email,
           password: formData.password,
-          options: {
-            data: {
-              full_name: formData.fullName,
-            },
-          },
-        });
-        if (authError) throw authError;
-        if (!authData.user) throw new Error("No user returned from auth signup");
-
-        // Create profile record with the user's ID
-        const profileData: ParticipantProfileInsert = {
-          id: authData.user.id,
-          name: formData.fullName,
-          email: formData.email,
-          date_of_birth: formData.dateOfBirth,
+          dateOfBirth: formData.dateOfBirth,
           gender: formData.gender,
-          job_title: formData.jobTitle,
-          organisation: formData.organization, // Convert American to British spelling
-        };
+          jobTitle: formData.jobTitle,
+          organization: formData.organization,
+        }),
+      });
 
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .insert([profileData])
-          .select()
-          .single();
-
-        if (profileError) throw profileError;
-
-        // Create participant record linking to the auth user
-        const { data: participant, error: participantError } = await supabase
-          .from("participants")
-          .insert([{ user_id: authData.user.id }])
-          .select()
-          .single();
-
-        if (participantError) throw participantError;
-
-        return { user: authData.user, profile, participant };
-      } else {
-        // For users without email/password, we can't create profiles
-        // since they require auth user ID due to foreign key constraint
-        throw new Error("Email and password are required for signup");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Signup failed');
       }
+
+      const data = await response.json();
+      return data.data; // Contains user, profile, participant, and session
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
