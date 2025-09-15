@@ -1,129 +1,81 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { useAuthContext } from "@/components/providers/auth-provider";
 import { CompetitionsList } from "@/components/competitions/competitions-list";
 import { CreateCompetitionButton } from "@/components/competitions/create-competition-button";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { Trophy, Menu, User, LogOut } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { AuthenticatedLayout } from "@/components/layout/authenticated-layout";
+import { Trophy } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createBrowserClient } from "@/lib/supabase/client";
 
-export const dynamic = "force-dynamic";
+interface Competition {
+  id: string;
+  title: string;
+  description: string;
+  slug: string;
+  start_date: string;
+  end_date: string;
+  max_participants: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
-export default async function CompetitionsPage() {
-  const supabase = await createClient();
+export default function CompetitionsPage() {
+  const { user, profile, isLoading, isAuthenticated } = useAuthContext();
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [competitionsLoading, setCompetitionsLoading] = useState(true);
 
-  // Get user (middleware already verified authentication)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  useEffect(() => {
+    async function fetchCompetitions() {
+      try {
+        const supabase = createBrowserClient();
+        const { data, error } = await supabase
+          .from("competitions")
+          .select("*")
+          .eq("is_active", true)
+          .order("created_at", { ascending: false });
 
-  // Fetch user profile to check admin status
-  const { data: profile } = user
-    ? await supabase.from("profiles").select("*").eq("id", user.id).single()
-    : { data: null };
+        if (error) {
+          console.error("Error fetching competitions:", error);
+        } else {
+          setCompetitions(data || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch competitions:", error);
+      } finally {
+        setCompetitionsLoading(false);
+      }
+    }
 
-  // Fetch competitions
-  const { data: competitions, error: competitionsError } = await supabase
-    .from("competitions")
-    .select("*")
-    .eq("is_active", true)
-    .order("created_at", { ascending: false });
+    fetchCompetitions();
+  }, []);
 
-  if (competitionsError) {
-    console.error("Error fetching competitions:", competitionsError);
+  // Show loading state
+  if (isLoading || competitionsLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mb-2 mx-auto">
+            <div className="w-4 h-4 bg-primary-foreground rounded-full" />
+          </div>
+          <div className="text-sm text-muted-foreground">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated (this should be handled by middleware, but just in case)
+  if (!isAuthenticated) {
+    window.location.href = '/auth/login';
+    return null;
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <div className="w-4 h-4 bg-primary-foreground rounded-full" />
-              </div>
-              <span className="text-xl font-semibold text-foreground">
-                {" "}
-                The Longevity Fitness Games.
-              </span>
-            </div>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-6">
-              <Link
-                href="/competitions"
-                className="text-foreground font-medium"
-              >
-                Competitions
-              </Link>
-              <Link
-                href="/profile"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Profile
-              </Link>
-              <form action="/auth/logout" method="post">
-                <Button variant="outline" size="sm" type="submit">
-                  Logout
-                </Button>
-              </form>
-            </nav>
-
-            {/* Mobile Navigation */}
-            <div className="md:hidden">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <Menu className="w-5 h-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem asChild>
-                    <Link
-                      href="/competitions"
-                      className="flex items-center gap-2"
-                    >
-                      <Trophy className="w-4 h-4" />
-                      Competitions
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center gap-2">
-                      <User className="w-4 h-4" />
-                      Profile
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <form
-                      action="/auth/logout"
-                      method="post"
-                      className="flex items-center gap-2"
-                    >
-                      <button
-                        type="submit"
-                        className="flex items-center gap-2 w-full text-left"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Logout
-                      </button>
-                    </form>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
+    <AuthenticatedLayout
+      title="Competitions"
+      subtitle="Join and compete with others"
+    >
       <main className="container mx-auto px-4 py-6 md:py-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 md:mb-8 gap-4">
           <div className="flex items-center gap-3">
@@ -141,8 +93,8 @@ export default async function CompetitionsPage() {
           {profile?.is_admin && <CreateCompetitionButton />}
         </div>
 
-        <CompetitionsList competitions={competitions || []} />
+        <CompetitionsList competitions={competitions} />
       </main>
-    </div>
+    </AuthenticatedLayout>
   );
 }

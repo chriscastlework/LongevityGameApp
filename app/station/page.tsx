@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AuthenticatedLayout } from "@/components/layout/authenticated-layout";
 import { Activity, Heart, Zap, Scale, QrCode, Users } from "lucide-react";
 
 import { QRScanner } from "@/components/station/qr-scanner";
@@ -93,7 +94,11 @@ export default function StationOperatorPage() {
   const StationIcon = currentStation.icon;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <AuthenticatedLayout
+      title="Station"
+      subtitle="Fitness testing station operator"
+      className="min-h-screen bg-gray-50 dark:bg-gray-900"
+    >
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -229,6 +234,6 @@ export default function StationOperatorPage() {
           ))}
         </Tabs>
       </div>
-    </div>
+    </AuthenticatedLayout>
   );
 }

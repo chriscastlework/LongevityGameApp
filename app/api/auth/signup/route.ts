@@ -135,6 +135,7 @@ export async function POST(request: NextRequest) {
         gender: gender as "male" | "female",
         job_title: jobTitle,
         organisation: organization, // Convert American to British spelling
+        is_admin: false, // Default to false for new signups
       };
 
       console.log("Creating profile...");

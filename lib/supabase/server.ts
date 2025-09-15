@@ -1,5 +1,5 @@
 import { createServerClient, serializeCookieHeader } from '@supabase/ssr'
-import { createClient } from "@supabase/supabase-js";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import type { NextRequest, NextResponse } from 'next/server'
 import type { Database } from "@/lib/types/database";
@@ -59,7 +59,7 @@ export function createAdminClient() {
     throw new Error("Missing Supabase environment variables");
   }
 
-  return createClient<Database>(supabaseUrl, supabaseServiceKey, {
+  return createSupabaseClient<Database>(supabaseUrl, supabaseServiceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -76,5 +76,8 @@ export async function createAuthClient() {
     throw new Error("Missing Supabase environment variables");
   }
 
-  return createClient<Database>(supabaseUrl, supabaseAnonKey);
+  return createSupabaseClient<Database>(supabaseUrl, supabaseAnonKey);
 }
+
+// Alias for backward compatibility - use createRouteHandlerClient instead
+export const createClient = createRouteHandlerClient;

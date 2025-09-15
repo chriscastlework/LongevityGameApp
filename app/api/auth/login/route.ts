@@ -67,12 +67,10 @@ export async function POST(request: NextRequest) {
 
     console.log("User authenticated:", authData.user.id);
 
-    // Get user profile and participant data
-    const adminClient = createAdminClient();
-
+    // Get user profile and participant data using regular client
     try {
       // Fetch user profile
-      const { data: profile, error: profileError } = await adminClient
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", authData.user.id)
@@ -84,7 +82,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Fetch participant record
-      const { data: participant, error: participantError } = await adminClient
+      const { data: participant, error: participantError } = await supabase
         .from("participants")
         .select("*")
         .eq("user_id", authData.user.id)

@@ -30,12 +30,10 @@ export async function GET(request: NextRequest) {
 
     console.log("Session validated for user:", user.id);
 
-    // Get user profile and participant data
-    const adminClient = createAdminClient();
-
+    // Get user profile and participant data using regular client
     try {
       // Fetch user profile
-      const { data: profile, error: profileError } = await adminClient
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
@@ -46,7 +44,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Fetch participant record
-      const { data: participant, error: participantError } = await adminClient
+      const { data: participant, error: participantError } = await supabase
         .from("participants")
         .select("*")
         .eq("user_id", user.id)
