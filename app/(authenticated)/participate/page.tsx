@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AuthenticatedLayout } from "@/components/layout/authenticated-layout";
-import { RefreshCw, Activity, Heart, Zap, Scale, Mail, CheckCircle } from "lucide-react";
+import { Activity, Heart, Zap, Scale, Mail, CheckCircle } from "lucide-react";
 import { useAuthContext } from "@/components/providers/auth-provider";
 import { useSearchParams, useRouter } from "next/navigation";
 
@@ -47,7 +47,6 @@ export default function ParticipatePage() {
   const { user, profile, refreshUser } = useAuthContext();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [qrValue, setQrValue] = useState("");
 
   // Check if user's email is confirmed
@@ -64,48 +63,15 @@ export default function ParticipatePage() {
     }
   }, [searchParams, user, refreshUser]);
 
-  // Update time every second and regenerate QR code (only for confirmed users)
+  // Set QR code URL (only for confirmed users)
   useEffect(() => {
     if (!isEmailConfirmed || !user || !profile) return;
 
-    const updateQR = () => {
-      const now = new Date();
-      setCurrentTime(now);
-
-      // Create QR code data with participant info and timestamp for security
-      const qrData = {
-        participant_code: `LFG-${user.id.slice(-4).toUpperCase()}`, // Use last 4 chars of user ID
-        participant_id: user.id,
-        participant_name: profile.name,
-        timestamp: now.toISOString(),
-        expires: new Date(now.getTime() + 5 * 60 * 1000).toISOString(), // 5 minute expiry
-      };
-
-      setQrValue(JSON.stringify(qrData));
-    };
-
-    updateQR();
-    const interval = setInterval(updateQR, 30000); // Refresh every 30 seconds
-
-    return () => clearInterval(interval);
+    const participantCode = `LFG-${user.id.slice(-4).toUpperCase()}`;
+    const qrUrl = `${window.location.origin}/stations/${participantCode}`;
+    setQrValue(qrUrl);
   }, [isEmailConfirmed, user, profile]);
 
-  const handleRefreshQR = () => {
-    if (!isEmailConfirmed || !user || !profile) return;
-
-    const now = new Date();
-    setCurrentTime(now);
-
-    const qrData = {
-      participant_code: `LFG-${user.id.slice(-4).toUpperCase()}`,
-      participant_id: user.id,
-      participant_name: profile.name,
-      timestamp: now.toISOString(),
-      expires: new Date(now.getTime() + 5 * 60 * 1000).toISOString(),
-    };
-
-    setQrValue(JSON.stringify(qrData));
-  };
 
   const handleResendConfirmation = async () => {
     try {
@@ -238,19 +204,7 @@ export default function ParticipatePage() {
 
                     <div className="space-y-2">
                       <p className="text-sm text-muted-foreground">
-                        QR Code updates every 30 seconds for security
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleRefreshQR}
-                        className="gap-2"
-                      >
-                        <RefreshCw className="h-4 w-4" />
-                        Refresh QR Code
-                      </Button>
-                      <p className="text-xs text-muted-foreground">
-                        Last updated: {currentTime.toLocaleTimeString()}
+                        Scan this QR code to access the station entry page
                       </p>
                     </div>
                   </>

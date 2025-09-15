@@ -25,7 +25,6 @@ import {
 export function useAuthDeepLink() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const pathname = usePathname()
   const [context, setContext] = useState<AuthUrlContext>({})
 
   useEffect(() => {
