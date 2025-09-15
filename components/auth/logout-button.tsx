@@ -22,7 +22,7 @@ export function LogoutButton({
   const { logout, isLoading } = useLogout();
 
   const handleLogout = () => {
-    logout("/"); // Redirect to home page after logout
+    logout("/auth/login"); // Redirect to login page after logout
   };
 
   return (

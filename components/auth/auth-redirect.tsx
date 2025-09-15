@@ -27,7 +27,7 @@ export function AuthRedirect() {
       const paramRedirect = searchParams.get("redirect");
       const competitionId = getCompetitionId();
 
-      let redirectTo = "/competitions";
+      let redirectTo = "/participate";
 
       // Prefer context redirect, then param redirect, then competition context
       if (

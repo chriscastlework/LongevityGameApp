@@ -6,16 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AuthenticatedLayout } from "@/components/layout/authenticated-layout";
-import { RefreshCw, Activity, Heart, Zap, Scale } from "lucide-react";
-
-// Mock participant data - in real implementation, this would come from auth context
-const mockParticipant = {
-  participant_code: "LFG-0001",
-  full_name: "John Doe",
-  organization: "Acme Corp",
-  created_at: new Date().toISOString(),
-};
+import { RefreshCw, Activity, Heart, Zap, Scale, Mail, CheckCircle } from "lucide-react";
+import { useAuthContext } from "@/components/providers/auth-provider";
+import { useSearchParams } from "next/navigation";
 
 const stations = [
   {
@@ -49,19 +44,38 @@ const stations = [
 ];
 
 export default function ParticipatePage() {
+  const { user, profile, refreshUser } = useAuthContext();
+  const searchParams = useSearchParams();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [qrValue, setQrValue] = useState("");
 
-  // Update time every second and regenerate QR code
+  // Check if user's email is confirmed
+  const isEmailConfirmed = user?.email_confirmed_at != null;
+
+  // Check if user just confirmed their email and refresh auth context
   useEffect(() => {
+    const confirmed = searchParams.get('confirmed');
+    if (confirmed === 'true' && user) {
+      // Small delay to ensure backend has processed the confirmation
+      setTimeout(() => {
+        refreshUser();
+      }, 1000);
+    }
+  }, [searchParams, user, refreshUser]);
+
+  // Update time every second and regenerate QR code (only for confirmed users)
+  useEffect(() => {
+    if (!isEmailConfirmed || !user || !profile) return;
+
     const updateQR = () => {
       const now = new Date();
       setCurrentTime(now);
 
       // Create QR code data with participant info and timestamp for security
       const qrData = {
-        participant_code: mockParticipant.participant_code,
-        participant_id: "mock-uuid-123", // This would be real UUID in production
+        participant_code: `LFG-${user.id.slice(-4).toUpperCase()}`, // Use last 4 chars of user ID
+        participant_id: user.id,
+        participant_name: profile.name,
         timestamp: now.toISOString(),
         expires: new Date(now.getTime() + 5 * 60 * 1000).toISOString(), // 5 minute expiry
       };
@@ -73,20 +87,44 @@ export default function ParticipatePage() {
     const interval = setInterval(updateQR, 30000); // Refresh every 30 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isEmailConfirmed, user, profile]);
 
   const handleRefreshQR = () => {
+    if (!isEmailConfirmed || !user || !profile) return;
+
     const now = new Date();
     setCurrentTime(now);
 
     const qrData = {
-      participant_code: mockParticipant.participant_code,
-      participant_id: "mock-uuid-123",
+      participant_code: `LFG-${user.id.slice(-4).toUpperCase()}`,
+      participant_id: user.id,
+      participant_name: profile.name,
       timestamp: now.toISOString(),
       expires: new Date(now.getTime() + 5 * 60 * 1000).toISOString(),
     };
 
     setQrValue(JSON.stringify(qrData));
+  };
+
+  const handleResendConfirmation = async () => {
+    try {
+      // Call the resend confirmation API endpoint
+      const response = await fetch('/api/auth/resend-confirmation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        alert('Confirmation email sent! Please check your inbox.');
+      } else {
+        alert('Failed to send confirmation email. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error resending confirmation:', error);
+      alert('Failed to send confirmation email. Please try again.');
+    }
   };
 
   return (
@@ -102,9 +140,34 @@ export default function ParticipatePage() {
             Welcome to the Longevity Fitness Games
           </h1>
           <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300">
-            You're ready to begin your fitness assessment!
+            {isEmailConfirmed
+              ? "You're ready to begin your fitness assessment!"
+              : "Please confirm your email to access your QR code"
+            }
           </p>
         </div>
+
+        {/* Email confirmation alert */}
+        {!isEmailConfirmed && (
+          <div className="max-w-2xl mx-auto mb-8">
+            <Alert>
+              <Mail className="h-4 w-4" />
+              <AlertDescription className="flex items-center justify-between">
+                <span>
+                  Please check your email and click the confirmation link to activate your account and access your QR code.
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResendConfirmation}
+                  className="ml-2"
+                >
+                  Resend Email
+                </Button>
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
           {/* Participant Info & QR Code */}
@@ -112,7 +175,10 @@ export default function ParticipatePage() {
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Your Participant Profile</CardTitle>
               <CardDescription>
-                Present this QR code to station operators
+                {isEmailConfirmed
+                  ? "Present this QR code to station operators"
+                  : "QR code will be available after email confirmation"
+                }
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -121,57 +187,84 @@ export default function ParticipatePage() {
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Participant Code:</span>
                   <Badge variant="secondary" className="text-lg px-3 py-1">
-                    {mockParticipant.participant_code}
+                    {user ? `LFG-${user.id.slice(-4).toUpperCase()}` : "Pending"}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Name:</span>
-                  <span>{mockParticipant.full_name}</span>
+                  <span>{profile?.name || "Loading..."}</span>
                 </div>
-                {mockParticipant.organization && (
+                {profile?.organisation && (
                   <div className="flex justify-between items-center">
                     <span className="font-medium">Organization:</span>
-                    <span>{mockParticipant.organization}</span>
+                    <span>{profile.organisation}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center">
-                  <span className="font-medium">Registered:</span>
-                  <span>{new Date(mockParticipant.created_at).toLocaleDateString()}</span>
+                  <span className="font-medium">Email Status:</span>
+                  <div className="flex items-center gap-2">
+                    {isEmailConfirmed ? (
+                      <>
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span className="text-green-600 dark:text-green-400">Confirmed</span>
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="h-4 w-4 text-yellow-500" />
+                        <span className="text-yellow-600 dark:text-yellow-400">Pending</span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
 
               <Separator />
 
-              {/* QR Code */}
+              {/* QR Code or Confirmation Message */}
               <div className="text-center space-y-4">
-                <div className="bg-white p-6 rounded-lg inline-block shadow-sm">
-                  {qrValue && (
-                    <QRCodeSVG
-                      value={qrValue}
-                      size={200}
-                      level="M"
-                      includeMargin={true}
-                    />
-                  )}
-                </div>
+                {isEmailConfirmed ? (
+                  <>
+                    <div className="bg-white p-6 rounded-lg inline-block shadow-sm">
+                      {qrValue && (
+                        <QRCodeSVG
+                          value={qrValue}
+                          size={200}
+                          level="M"
+                          includeMargin={true}
+                        />
+                      )}
+                    </div>
 
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    QR Code updates every 30 seconds for security
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRefreshQR}
-                    className="gap-2"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    Refresh QR Code
-                  </Button>
-                  <p className="text-xs text-muted-foreground">
-                    Last updated: {currentTime.toLocaleTimeString()}
-                  </p>
-                </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        QR Code updates every 30 seconds for security
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRefreshQR}
+                        className="gap-2"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                        Refresh QR Code
+                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        Last updated: {currentTime.toLocaleTimeString()}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="bg-muted/50 p-6 rounded-lg">
+                    <Mail className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="font-semibold mb-2">Email Confirmation Required</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Your QR code will appear here once you confirm your email address
+                    </p>
+                    <Button onClick={handleResendConfirmation} variant="outline" size="sm">
+                      Resend Confirmation Email
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -203,7 +296,9 @@ export default function ParticipatePage() {
                             {station.description}
                           </p>
                         </div>
-                        <Badge variant="outline">Ready</Badge>
+                        <Badge variant="outline">
+                          {isEmailConfirmed ? "Ready" : "Confirm Email"}
+                        </Badge>
                       </div>
                     );
                   })}
@@ -223,6 +318,18 @@ export default function ParticipatePage() {
                       1
                     </div>
                     <div>
+                      <p className="font-medium">Confirm Your Email</p>
+                      <p className="text-sm text-muted-foreground">
+                        Check your email and click the confirmation link to activate your account
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <div className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">
+                      2
+                    </div>
+                    <div>
                       <p className="font-medium">Present Your QR Code</p>
                       <p className="text-sm text-muted-foreground">
                         Show your QR code to the station operator when you arrive
@@ -232,7 +339,7 @@ export default function ParticipatePage() {
 
                   <div className="flex gap-3">
                     <div className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">
-                      2
+                      3
                     </div>
                     <div>
                       <p className="font-medium">Complete the Assessment</p>
@@ -244,7 +351,7 @@ export default function ParticipatePage() {
 
                   <div className="flex gap-3">
                     <div className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">
-                      3
+                      4
                     </div>
                     <div>
                       <p className="font-medium">View Your Results</p>
@@ -264,10 +371,17 @@ export default function ParticipatePage() {
               </CardHeader>
               <CardContent>
                 <div className="flex gap-3">
-                  <Button className="flex-1">
+                  <Button
+                    className="flex-1"
+                    disabled={!isEmailConfirmed}
+                  >
                     View Leaderboard
                   </Button>
-                  <Button variant="outline" className="flex-1">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    disabled={!isEmailConfirmed}
+                  >
                     My Results
                   </Button>
                 </div>
