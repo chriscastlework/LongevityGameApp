@@ -24,93 +24,152 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function downloadSchema() {
   try {
-    console.log('Downloading database schema...');
+    console.log('Downloading complete database schema...');
 
-    // Get table information
-    const { data: tables, error: tablesError } = await supabase
-      .rpc('get_table_schema', {});
+    // Try to discover tables by attempting to query known and likely table names
+    const possibleTables = [
+      'participants',
+      'profiles',
+      'stations',
+      'station_results',
+      'station_audits',
+      'station_operators',
+      'competitions',
+      'competition_entries'
+    ];
 
-    if (tablesError) {
-      // Fallback: Get basic table info
-      console.log('Using fallback method to get schema...');
+    const schema = {};
+    const foundTables = [];
 
-      // Get participants table schema
-      const { data: participantsData, error: participantsError } = await supabase
-        .from('participants')
-        .select('*')
-        .limit(0);
+    console.log('Step 1: Discovering tables by testing known names...');
+    for (const tableName of possibleTables) {
+      try {
+        console.log(`Testing table: ${tableName}`);
+        const { data, error } = await supabase
+          .from(tableName)
+          .select('*')
+          .limit(0); // Get 0 records to just check if table exists
 
-      if (participantsError) {
-        console.error('Error fetching participants schema:', participantsError);
-      }
-
-      // Get station_audits table schema
-      const { data: stationAuditsData, error: stationAuditsError } = await supabase
-        .from('station_audits')
-        .select('*')
-        .limit(0);
-
-      if (stationAuditsError) {
-        console.error('Error fetching station_audits schema:', stationAuditsError);
-      }
-
-      // Get actual column information using information_schema
-      const { data: columnsData, error: columnsError } = await supabase
-        .rpc('get_columns_info');
-
-      if (columnsError) {
-        // Final fallback - query system tables directly
-        const { data: systemData, error: systemError } = await supabase
-          .from('information_schema.columns')
-          .select('table_name, column_name, data_type, is_nullable, column_default')
-          .in('table_name', ['participants', 'station_audits']);
-
-        if (systemError) {
-          console.error('Error querying system tables:', systemError);
-
-          // Last resort - inspect a real record if it exists
-          console.log('Trying to inspect existing data structure...');
-          const { data: sampleData, error: sampleError } = await supabase
-            .from('participants')
-            .select('*')
-            .limit(1);
-
-          if (!sampleError && sampleData && sampleData.length > 0) {
-            console.log('Sample participant record structure:');
-            console.log(JSON.stringify(sampleData[0], null, 2));
-
-            const schema = {
-              participants: {
-                columns: Object.keys(sampleData[0]).map(key => ({
-                  name: key,
-                  type: typeof sampleData[0][key],
-                  value: sampleData[0][key]
-                }))
-              }
-            };
-
-            fs.writeFileSync(
-              path.join(__dirname, 'current-schema.json'),
-              JSON.stringify(schema, null, 2)
-            );
-
-            console.log('Schema sample saved to scripts/current-schema.json');
-            return;
-          }
-
-          console.error('Could not retrieve any schema information');
-          return;
+        if (!error) {
+          foundTables.push(tableName);
+          console.log(`✅ Found table: ${tableName}`);
+        } else {
+          console.log(`❌ Table ${tableName} not found: ${error.message}`);
         }
-
-        console.log('System schema data:', systemData);
-        fs.writeFileSync(
-          path.join(__dirname, 'current-schema.json'),
-          JSON.stringify(systemData, null, 2)
-        );
+      } catch (err) {
+        console.log(`❌ Error testing ${tableName}: ${err.message}`);
       }
     }
 
-    console.log('Schema download complete!');
+    console.log('Found tables:', foundTables);
+
+    // For each found table, get sample data to understand structure
+    console.log('Step 2: Getting structure and sample data from each table...');
+    for (const tableName of foundTables) {
+      try {
+        console.log(`\n--- Analyzing table: ${tableName} ---`);
+
+        // Try to get sample data
+        const { data: sampleData, error: sampleError } = await supabase
+          .from(tableName)
+          .select('*')
+          .limit(1);
+
+        if (!sampleError && sampleData && sampleData.length > 0) {
+          console.log(`Sample data from ${tableName}:`);
+          console.log(JSON.stringify(sampleData[0], null, 2));
+
+          schema[tableName] = {
+            exists: true,
+            has_data: true,
+            sample_record: sampleData[0],
+            columns: Object.keys(sampleData[0]).map(key => ({
+              name: key,
+              javascript_type: typeof sampleData[0][key],
+              value_example: sampleData[0][key],
+              is_nullable: sampleData[0][key] === null
+            }))
+          };
+
+        } else if (!sampleError && sampleData && sampleData.length === 0) {
+          console.log(`Table ${tableName} exists but is empty`);
+
+          // Try to get column info by selecting with limit 0 and checking the response structure
+          schema[tableName] = {
+            exists: true,
+            has_data: false,
+            sample_record: null,
+            columns: []
+          };
+
+        } else {
+          console.log(`Error accessing ${tableName}:`, sampleError?.message);
+          schema[tableName] = {
+            exists: true,
+            has_data: false,
+            error: sampleError?.message,
+            columns: []
+          };
+        }
+
+      } catch (err) {
+        console.log(`Error analyzing ${tableName}:`, err.message);
+        schema[tableName] = {
+          exists: false,
+          error: err.message
+        };
+      }
+    }
+
+    // Also try to find what the hint suggested
+    if (schema.station_operators?.error && schema.station_operators.error.includes("Perhaps you meant")) {
+      console.log('\n--- Checking hinted table: station_operators ---');
+      try {
+        const { data: stationOpsData, error: stationOpsError } = await supabase
+          .from('station_operators')
+          .select('*')
+          .limit(1);
+
+        if (!stationOpsError) {
+          foundTables.push('station_operators');
+          schema['station_operators'] = {
+            exists: true,
+            has_data: stationOpsData && stationOpsData.length > 0,
+            sample_record: stationOpsData?.[0] || null,
+            columns: stationOpsData && stationOpsData.length > 0
+              ? Object.keys(stationOpsData[0]).map(key => ({
+                  name: key,
+                  javascript_type: typeof stationOpsData[0][key],
+                  value_example: stationOpsData[0][key],
+                  is_nullable: stationOpsData[0][key] === null
+                }))
+              : []
+          };
+          console.log('Found station_operators table!');
+          if (stationOpsData && stationOpsData.length > 0) {
+            console.log('Sample data:', JSON.stringify(stationOpsData[0], null, 2));
+          }
+        }
+      } catch (err) {
+        console.log('station_operators error:', err.message);
+      }
+    }
+
+    // Save the complete schema
+    const schemaOutput = {
+      discovered_at: new Date().toISOString(),
+      found_tables: foundTables,
+      tables: schema
+    };
+
+    fs.writeFileSync(
+      path.join(__dirname, 'complete-schema.json'),
+      JSON.stringify(schemaOutput, null, 2)
+    );
+
+    console.log('\n=== SCHEMA DISCOVERY COMPLETE ===');
+    console.log(`Found ${foundTables.length} tables:`, foundTables);
+    console.log('Complete schema saved to scripts/complete-schema.json');
 
   } catch (error) {
     console.error('Error downloading schema:', error);

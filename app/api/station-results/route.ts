@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient, createRouteHandlerClient } from "@/lib/supabase/server";
-import type { StationType, BalanceMeasurement, BreathMeasurement, GripMeasurement, HealthMeasurement } from "@/lib/types/database";
+import type { StationType, BalanceMeasurement, BreathMeasurement, GripMeasurement, HealthMeasurement, StationResultInsert } from "@/lib/types/database";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -71,57 +71,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let updateData: any = {};
+    // Find the station to get the station_id
+    const { data: station, error: stationError } = await supabase
+      .from('stations')
+      .select('id')
+      .eq('station_type', stationType)
+      .single();
 
-    // Map measurements to participant table columns based on station type
-    switch (stationType) {
-      case 'balance':
-        const balanceData = measurements as BalanceMeasurement;
-        updateData = { balance_seconds: balanceData.balance_seconds };
-        break;
-      case 'breath':
-        const breathData = measurements as BreathMeasurement;
-        updateData = { breath_seconds: breathData.breath_seconds };
-        break;
-      case 'grip':
-        const gripData = measurements as GripMeasurement;
-        updateData = {
-          grip_left_kg: gripData.grip_left_kg,
-          grip_right_kg: gripData.grip_right_kg
-        };
-        break;
-      case 'health':
-        const healthData = measurements as HealthMeasurement;
-        updateData = {
-          bp_systolic: healthData.bp_systolic,
-          bp_diastolic: healthData.bp_diastolic,
-          pulse: healthData.pulse,
-          bmi: healthData.bmi,
-          muscle_pct: healthData.muscle_pct,
-          fat_pct: healthData.fat_pct,
-          spo2: healthData.spo2
-        };
-        break;
-      default:
-        return NextResponse.json(
-          { error: `Unknown station type: ${stationType}` },
-          { status: 400 }
-        );
+    if (stationError || !station) {
+      console.error('Station not found:', stationError);
+      return NextResponse.json(
+        { error: "Station not found" },
+        { status: 404 }
+      );
     }
 
-    // Update the participant record with measurements
-    const { data: updatedParticipant, error: updateError } = await supabase
-      .from('participants')
-      .update({
-        ...updateData,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', participant.id)
+    // Create a new station result record
+    const stationResultData: StationResultInsert = {
+      participant_id: participant.id,
+      station_id: station.id,
+      station_type: stationType,
+      measurements: measurements as any, // JSONB field - cast to bypass type checking
+      recorded_by: user.id
+    };
+
+    const { data: stationResult, error: insertError } = await supabase
+      .from('station_results')
+      .insert(stationResultData)
       .select()
       .single();
 
-    if (updateError) {
-      console.error('Error updating participant measurements:', updateError);
+    if (insertError) {
+      console.error('Error saving station result:', insertError);
       return NextResponse.json(
         { error: "Failed to save measurements" },
         { status: 500 }
@@ -145,11 +126,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      result_id: stationResult.id,
       participant_id: participant.id,
       participant_code: participantCode,
       station_type: stationType,
       measurements: measurements,
-      updated_at: updatedParticipant.updated_at
+      created_at: stationResult.created_at
     });
 
   } catch (error) {

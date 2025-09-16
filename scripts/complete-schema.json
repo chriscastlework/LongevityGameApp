@@ -1,0 +1,230 @@
+{
+  "discovered_at": "2025-09-16T16:24:41.051Z",
+  "found_tables": [
+    "participants",
+    "profiles",
+    "stations",
+    "station_operators"
+  ],
+  "tables": {
+    "participants": {
+      "exists": true,
+      "has_data": true,
+      "sample_record": {
+        "id": "3e34c323-6050-4f82-a98f-9457b894f2a1",
+        "user_id": "d8ef592e-3a80-4724-9776-890232ec4f40",
+        "participant_code": "LFG-0002",
+        "agreement_accepted": false,
+        "agreement_accepted_at": null,
+        "created_at": "2025-09-15T16:04:54.556498+00:00",
+        "updated_at": "2025-09-15T16:04:54.556498+00:00"
+      },
+      "columns": [
+        {
+          "name": "id",
+          "javascript_type": "string",
+          "value_example": "3e34c323-6050-4f82-a98f-9457b894f2a1",
+          "is_nullable": false
+        },
+        {
+          "name": "user_id",
+          "javascript_type": "string",
+          "value_example": "d8ef592e-3a80-4724-9776-890232ec4f40",
+          "is_nullable": false
+        },
+        {
+          "name": "participant_code",
+          "javascript_type": "string",
+          "value_example": "LFG-0002",
+          "is_nullable": false
+        },
+        {
+          "name": "agreement_accepted",
+          "javascript_type": "boolean",
+          "value_example": false,
+          "is_nullable": false
+        },
+        {
+          "name": "agreement_accepted_at",
+          "javascript_type": "object",
+          "value_example": null,
+          "is_nullable": true
+        },
+        {
+          "name": "created_at",
+          "javascript_type": "string",
+          "value_example": "2025-09-15T16:04:54.556498+00:00",
+          "is_nullable": false
+        },
+        {
+          "name": "updated_at",
+          "javascript_type": "string",
+          "value_example": "2025-09-15T16:04:54.556498+00:00",
+          "is_nullable": false
+        }
+      ]
+    },
+    "profiles": {
+      "exists": true,
+      "has_data": true,
+      "sample_record": {
+        "id": "d8ef592e-3a80-4724-9776-890232ec4f40",
+        "name": "Christopher Castle",
+        "email": "chris.castle.work@gmail.com",
+        "date_of_birth": "1984-09-22",
+        "gender": "male",
+        "job_title": "Software Developer",
+        "organisation": "Option Development",
+        "created_at": "2025-09-15T16:04:54.47024+00:00",
+        "updated_at": "2025-09-15T16:04:54.47024+00:00",
+        "role": "admin"
+      },
+      "columns": [
+        {
+          "name": "id",
+          "javascript_type": "string",
+          "value_example": "d8ef592e-3a80-4724-9776-890232ec4f40",
+          "is_nullable": false
+        },
+        {
+          "name": "name",
+          "javascript_type": "string",
+          "value_example": "Christopher Castle",
+          "is_nullable": false
+        },
+        {
+          "name": "email",
+          "javascript_type": "string",
+          "value_example": "chris.castle.work@gmail.com",
+          "is_nullable": false
+        },
+        {
+          "name": "date_of_birth",
+          "javascript_type": "string",
+          "value_example": "1984-09-22",
+          "is_nullable": false
+        },
+        {
+          "name": "gender",
+          "javascript_type": "string",
+          "value_example": "male",
+          "is_nullable": false
+        },
+        {
+          "name": "job_title",
+          "javascript_type": "string",
+          "value_example": "Software Developer",
+          "is_nullable": false
+        },
+        {
+          "name": "organisation",
+          "javascript_type": "string",
+          "value_example": "Option Development",
+          "is_nullable": false
+        },
+        {
+          "name": "created_at",
+          "javascript_type": "string",
+          "value_example": "2025-09-15T16:04:54.47024+00:00",
+          "is_nullable": false
+        },
+        {
+          "name": "updated_at",
+          "javascript_type": "string",
+          "value_example": "2025-09-15T16:04:54.47024+00:00",
+          "is_nullable": false
+        },
+        {
+          "name": "role",
+          "javascript_type": "string",
+          "value_example": "admin",
+          "is_nullable": false
+        }
+      ]
+    },
+    "stations": {
+      "exists": true,
+      "has_data": true,
+      "sample_record": {
+        "id": "84ea0fb4-1b3b-4acd-b21b-5e79ac636b62",
+        "name": "Balance of Time",
+        "description": "Test your balance and coordination skills",
+        "created_at": "2025-09-14T15:51:39.30708+00:00",
+        "icon_name": "Scale",
+        "color_class": "bg-blue-500",
+        "is_active": true,
+        "sort_order": 1,
+        "updated_at": "2025-09-15T18:14:56.375413+00:00",
+        "station_type": "balance"
+      },
+      "columns": [
+        {
+          "name": "id",
+          "javascript_type": "string",
+          "value_example": "84ea0fb4-1b3b-4acd-b21b-5e79ac636b62",
+          "is_nullable": false
+        },
+        {
+          "name": "name",
+          "javascript_type": "string",
+          "value_example": "Balance of Time",
+          "is_nullable": false
+        },
+        {
+          "name": "description",
+          "javascript_type": "string",
+          "value_example": "Test your balance and coordination skills",
+          "is_nullable": false
+        },
+        {
+          "name": "created_at",
+          "javascript_type": "string",
+          "value_example": "2025-09-14T15:51:39.30708+00:00",
+          "is_nullable": false
+        },
+        {
+          "name": "icon_name",
+          "javascript_type": "string",
+          "value_example": "Scale",
+          "is_nullable": false
+        },
+        {
+          "name": "color_class",
+          "javascript_type": "string",
+          "value_example": "bg-blue-500",
+          "is_nullable": false
+        },
+        {
+          "name": "is_active",
+          "javascript_type": "boolean",
+          "value_example": true,
+          "is_nullable": false
+        },
+        {
+          "name": "sort_order",
+          "javascript_type": "number",
+          "value_example": 1,
+          "is_nullable": false
+        },
+        {
+          "name": "updated_at",
+          "javascript_type": "string",
+          "value_example": "2025-09-15T18:14:56.375413+00:00",
+          "is_nullable": false
+        },
+        {
+          "name": "station_type",
+          "javascript_type": "string",
+          "value_example": "balance",
+          "is_nullable": false
+        }
+      ]
+    },
+    "station_operators": {
+      "exists": true,
+      "has_data": false,
+      "sample_record": null,
+      "columns": []
+    }
+  }
+}

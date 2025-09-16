@@ -32,7 +32,7 @@ export type OAuthProvider = "google" | "github" | "discord" | "apple";
 export interface OAuthState {
   provider: OAuthProvider;
   redirectUrl?: string;
-  competitionId?: string;
+  stationId?: string;
   timestamp: number;
   nonce: string;
 }
@@ -129,22 +129,20 @@ export interface AuthOperationResult {
 }
 
 /**
- * Competition entry status
+ * Station entry status (updated from competition entry status)
  */
-export interface CompetitionEntryStatus {
-  canEnter: boolean;
-  hasEntry: boolean;
+export interface StationEntryStatus {
+  canAccess: boolean;
+  hasPermission: boolean;
   isActive: boolean;
   isLoading: boolean;
   error: string | null;
   requiresAuth: boolean;
-  competition: {
+  station: {
     id: string;
-    title: string;
+    name: string;
     description: string;
-    startDate: string;
-    endDate: string;
-    maxParticipants?: number;
+    stationType: string;
     isActive: boolean;
   } | null;
 }
@@ -158,7 +156,7 @@ export interface RouteGuardProps {
   requireAdmin?: boolean;
   requireEmailConfirmed?: boolean;
   redirectTo?: string;
-  competitionId?: string;
+  stationId?: string;
   onUnauthorized?: () => void;
 }
 
@@ -205,16 +203,16 @@ export interface AuthFormProps {
 }
 
 /**
- * Competition entry guard props
+ * Station access guard props
  */
-export interface CompetitionEntryGuardProps {
+export interface StationAccessGuardProps {
   children: React.ReactNode;
-  competitionId?: string;
+  stationId?: string;
   requireAuth?: boolean;
-  showCompetitionInfo?: boolean;
+  showStationInfo?: boolean;
   className?: string;
   onUnauthorized?: () => void;
-  onAlreadyEntered?: () => void;
+  onAccessDenied?: () => void;
 }
 
 /**
@@ -316,4 +314,4 @@ export interface AuthConfig {
  * Re-export commonly used types
  */
 export type { User, Session } from "@supabase/supabase-js";
-export type { Profile, Competition, CompetitionEntry } from "./database";
+export type { Profile } from "./database";
