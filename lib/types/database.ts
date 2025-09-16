@@ -476,12 +476,11 @@ export interface BalanceMeasurement {
 }
 
 export interface BreathMeasurement {
-  breath_seconds: number;
+  balloon_diameter_cm: number;
 }
 
 export interface GripMeasurement {
-  grip_left_kg: number;
-  grip_right_kg: number;
+  grip_seconds: number;
 }
 
 export interface HealthMeasurement {
@@ -511,3 +510,21 @@ export interface LeaderboardEntry {
 }
 
 export type StationResultInsert = TablesInsert<"station_results">;
+
+// Additional type exports for existing code compatibility
+export type UserRole = Database["public"]["Enums"]["user_role"];
+export type Profile = Tables<"profiles">;
+export type Station = Tables<"stations">;
+export type StationUpdate = TablesUpdate<"stations">;
+export type ParticipantProfileInsert = TablesInsert<"profiles">;
+
+// Re-export SignupFormData from auth types if it exists
+export interface SignupFormData {
+  name: string;
+  email: string;
+  password: string;
+  dateOfBirth: string;
+  gender: string;
+  organisation: string;
+  jobTitle: string;
+}

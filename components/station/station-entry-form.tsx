@@ -8,7 +8,6 @@ import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Form,
@@ -19,6 +18,8 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
+import { TimeInput } from "@/components/ui/time-input";
+import { NumberInput } from "@/components/ui/number-input";
 
 import type { StationType, BalanceMeasurement, BreathMeasurement, GripMeasurement, HealthMeasurement } from "@/lib/types/database";
 
@@ -30,18 +31,15 @@ const balanceSchema = z.object({
 });
 
 const breathSchema = z.object({
-  breath_seconds: z.number()
-    .min(0, "Breath hold time cannot be negative")
-    .max(120, "Breath hold time cannot exceed 120 seconds"),
+  balloon_diameter_cm: z.number()
+    .min(0, "Balloon diameter cannot be negative")
+    .max(100, "Balloon diameter cannot exceed 100cm"),
 });
 
 const gripSchema = z.object({
-  grip_left_kg: z.number()
-    .min(0, "Grip strength cannot be negative")
-    .max(120, "Grip strength cannot exceed 120kg"),
-  grip_right_kg: z.number()
-    .min(0, "Grip strength cannot be negative")
-    .max(120, "Grip strength cannot exceed 120kg"),
+  grip_seconds: z.number()
+    .min(0, "Grip time cannot be negative")
+    .max(600, "Grip time cannot exceed 10 minutes"),
 });
 
 const healthSchema = z.object({
@@ -78,44 +76,52 @@ export function StationEntryForm({ station, participantCode, onSubmit }: Station
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Get the appropriate schema based on station type
-  const getSchema = () => {
+  // Get the appropriate schema and default values based on station type
+  const getSchemaAndDefaults = () => {
     switch (station) {
-      case "balance": return balanceSchema;
-      case "breath": return breathSchema;
-      case "grip": return gripSchema;
-      case "health": return healthSchema;
-      default: return z.object({});
+      case "balance":
+        return {
+          schema: balanceSchema,
+          defaults: { balance_seconds: 0 }
+        };
+      case "breath":
+        return {
+          schema: breathSchema,
+          defaults: { balloon_diameter_cm: 0 }
+        };
+      case "grip":
+        return {
+          schema: gripSchema,
+          defaults: { grip_seconds: 0 }
+        };
+      case "health":
+        return {
+          schema: healthSchema,
+          defaults: {
+            bp_systolic: 120,
+            bp_diastolic: 80,
+            pulse: 72,
+            bmi: 22.0,
+            muscle_pct: 30.0,
+            fat_pct: 15.0,
+            spo2: 98,
+          }
+        };
+      default:
+        return {
+          schema: z.object({}),
+          defaults: {}
+        };
     }
   };
 
-  const form = useForm({
-    resolver: zodResolver(getSchema()),
-    defaultValues: getDefaultValues(),
+  // Use any to avoid TypeScript union type issues with useForm
+  const { schema, defaults } = getSchemaAndDefaults();
+  const form = useForm<any>({
+    resolver: zodResolver(schema),
+    defaultValues: defaults,
   });
 
-  function getDefaultValues() {
-    switch (station) {
-      case "balance":
-        return { balance_seconds: 0 };
-      case "breath":
-        return { breath_seconds: 0 };
-      case "grip":
-        return { grip_left_kg: 0, grip_right_kg: 0 };
-      case "health":
-        return {
-          bp_systolic: 120,
-          bp_diastolic: 80,
-          pulse: 72,
-          bmi: 22.0,
-          muscle_pct: 30.0,
-          fat_pct: 15.0,
-          spo2: 98,
-        };
-      default:
-        return {};
-    }
-  }
 
   const handleSubmit = async (data: any) => {
     setIsSubmitting(true);
@@ -137,20 +143,17 @@ export function StationEntryForm({ station, participantCode, onSubmit }: Station
       name="balance_seconds"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Balance Time (seconds)</FormLabel>
+          <FormLabel>Balance Time</FormLabel>
           <FormControl>
-            <Input
-              {...field}
-              type="number"
-              min="0"
-              max="60"
-              step="0.1"
-              placeholder="45.5"
-              onChange={(e) => field.onChange(parseFloat(e.target.value))}
+            <TimeInput
+              value={field.value || 0}
+              onChange={field.onChange}
+              placeholder="0:00"
+              maxMinutes={1}
             />
           </FormControl>
           <FormDescription>
-            Time participant maintained balance (0-60 seconds)
+            Time participant maintained balance (maximum 1 minute)
           </FormDescription>
           <FormMessage />
         </FormItem>
@@ -161,23 +164,21 @@ export function StationEntryForm({ station, participantCode, onSubmit }: Station
   const renderBreathForm = () => (
     <FormField
       control={form.control}
-      name="breath_seconds"
+      name="balloon_diameter_cm"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Breath Hold Time (seconds)</FormLabel>
+          <FormLabel>Balloon Diameter (cm)</FormLabel>
           <FormControl>
-            <Input
-              {...field}
-              type="number"
-              min="0"
-              max="120"
-              step="0.1"
-              placeholder="30.0"
-              onChange={(e) => field.onChange(parseFloat(e.target.value))}
+            <NumberInput
+              value={field.value || 0}
+              onChange={field.onChange}
+              min={0}
+              max={100}
+              placeholder="25"
             />
           </FormControl>
           <FormDescription>
-            Time participant held their breath (0-120 seconds)
+            Diameter of the balloon in centimeters (0-100cm)
           </FormDescription>
           <FormMessage />
         </FormItem>
@@ -186,53 +187,27 @@ export function StationEntryForm({ station, participantCode, onSubmit }: Station
   );
 
   const renderGripForm = () => (
-    <div className="space-y-4">
-      <FormField
-        control={form.control}
-        name="grip_left_kg"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Left Hand Grip Strength (kg)</FormLabel>
-            <FormControl>
-              <Input
-                {...field}
-                type="number"
-                min="0"
-                max="120"
-                step="0.1"
-                placeholder="35.5"
-                onChange={(e) => field.onChange(parseFloat(e.target.value))}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="grip_right_kg"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Right Hand Grip Strength (kg)</FormLabel>
-            <FormControl>
-              <Input
-                {...field}
-                type="number"
-                min="0"
-                max="120"
-                step="0.1"
-                placeholder="37.2"
-                onChange={(e) => field.onChange(parseFloat(e.target.value))}
-              />
-            </FormControl>
-            <FormDescription>
-              Maximum grip strength for each hand in kilograms
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </div>
+    <FormField
+      control={form.control}
+      name="grip_seconds"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Grip Strength Time</FormLabel>
+          <FormControl>
+            <TimeInput
+              value={field.value || 0}
+              onChange={field.onChange}
+              placeholder="0:00"
+              maxMinutes={10}
+            />
+          </FormControl>
+          <FormDescription>
+            Time participant maintained grip strength (maximum 10 minutes)
+          </FormDescription>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
   );
 
   const renderHealthForm = () => (
