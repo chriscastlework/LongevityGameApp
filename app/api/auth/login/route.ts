@@ -95,6 +95,12 @@ export async function POST(request: NextRequest) {
 
       console.log("Login successful for user:", authData.user.id);
 
+      // Set the session in cookies for the user
+      const supabaseForSession = await createRouteHandlerClient();
+      if (authData.session) {
+        await supabaseForSession.auth.setSession(authData.session);
+      }
+
       // Return success response with user data and tokens
       return NextResponse.json({
         success: true,
@@ -119,6 +125,12 @@ export async function POST(request: NextRequest) {
 
     } catch (error: any) {
       console.error("Profile/participant fetch failed:", error.message);
+
+      // Set the session in cookies for the user even if profile fetch fails
+      const supabaseForSession = await createRouteHandlerClient();
+      if (authData.session) {
+        await supabaseForSession.auth.setSession(authData.session);
+      }
 
       // Still return successful login even if profile fetch fails
       return NextResponse.json({

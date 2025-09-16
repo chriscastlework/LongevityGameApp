@@ -304,6 +304,25 @@ export interface BalanceMeasurement {
   balance_seconds: number;
 }
 
+export interface BreathMeasurement {
+  breath_seconds: number;
+}
+
+export interface GripMeasurement {
+  grip_left_kg: number;
+  grip_right_kg: number;
+}
+
+export interface HealthMeasurement {
+  bp_systolic: number;
+  bp_diastolic: number;
+  pulse: number;
+  bmi: number;
+  muscle_pct: number;
+  fat_pct: number;
+  spo2: number;
+}
+
 // For backward compatibility
 export type Profile = ParticipantProfile
 

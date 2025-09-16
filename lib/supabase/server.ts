@@ -1,4 +1,4 @@
-import { createServerClient, serializeCookieHeader } from '@supabase/ssr'
+import { createServerClient as createSupabaseServerClient, serializeCookieHeader } from '@supabase/ssr'
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import type { NextRequest, NextResponse } from 'next/server'
@@ -8,7 +8,7 @@ import type { Database } from "@/lib/types/database";
 export async function createRouteHandlerClient() {
   const cookieStore = await cookies();
 
-  return createServerClient<Database>(
+  return createSupabaseServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -16,14 +16,23 @@ export async function createRouteHandlerClient() {
         getAll() {
           return cookieStore.getAll()
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options)
-          })
+        setAll(cookiesToSet: Array<{name: string, value: string, options: any}>) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options)
+            })
+          } catch (error) {
+            // This can fail in middleware or some server environments
+          }
         }
       }
     }
   )
+}
+
+// Server client for Server Components
+export async function createServerClient() {
+  return createRouteHandlerClient();
 }
 
 // Server client for middleware/request-response cycle
@@ -31,7 +40,7 @@ export function createMiddlewareClient(
   request: NextRequest,
   response: NextResponse
 ) {
-  return createServerClient<Database>(
+  return createSupabaseServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -39,7 +48,7 @@ export function createMiddlewareClient(
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: Array<{name: string, value: string, options: any}>) {
           cookiesToSet.forEach(({ name, value, options }) => {
             const cookieString = serializeCookieHeader(name, value, options)
             response.headers.append('Set-Cookie', cookieString)

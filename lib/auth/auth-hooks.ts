@@ -8,7 +8,7 @@ import { useEffect, useState, useCallback } from "react"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { useAuthContext } from "@/components/providers/auth-provider"
 import { useLoginMutation, useSignupMutation } from "./useAuth"
-import { createBrowserClient } from "@/lib/supabase/client"
+import { createClient as createBrowserClient } from "@/lib/supabase/client"
 import { useQueryClient } from "@tanstack/react-query"
 import {
   isValidRedirectUrl,

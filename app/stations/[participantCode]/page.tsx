@@ -96,21 +96,42 @@ export default function StationParticipantPage() {
     setSelectedStation(stationId);
   };
 
-  const handleDataSubmit = (measurements: any) => {
-    console.log("Submitting measurements:", {
-      participantCode,
-      station: selectedStation,
-      measurements,
-    });
+  const handleDataSubmit = async (measurements: any) => {
+    if (!selectedStation) return;
 
-    // Here we would submit to Supabase results table
-    setSubmitted(true);
+    try {
+      const response = await fetch('/api/station-results', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          participantCode,
+          stationType: selectedStation,
+          measurements,
+        }),
+      });
 
-    // Reset after a delay
-    setTimeout(() => {
-      setSubmitted(false);
-      setSelectedStation(null);
-    }, 3000);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to save measurements');
+      }
+
+      const result = await response.json();
+      console.log("Successfully saved measurements:", result);
+
+      setSubmitted(true);
+
+      // Reset after a delay
+      setTimeout(() => {
+        setSubmitted(false);
+        setSelectedStation(null);
+      }, 3000);
+    } catch (error) {
+      console.error("Error saving measurements:", error);
+      // You might want to show an error toast or alert here
+      alert(`Failed to save measurements: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   return (

@@ -1,17 +1,12 @@
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient as createSupabaseBrowserClient } from "@supabase/ssr";
 import type { Database } from "@/lib/types/database";
 
-export function createBrowserClient() {
-  console.log(
-    "createBrowserClient",
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
-  return createSupabaseClient<Database>(
+export function createClient() {
+  return createSupabaseBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 }
 
-// Export createClient for backward compatibility
-export const createClient = createBrowserClient;
+// Export createBrowserClient as alias
+export const createBrowserClient = createClient;

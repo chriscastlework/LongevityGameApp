@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { createBrowserClient } from "@/lib/supabase/client";
+import { createClient as createBrowserClient } from "@/lib/supabase/client";
 import type { ParticipantProfileInsert, SignupFormData, UserRole } from "@/lib/types/database";
 
 // Fetch current user session/profile
@@ -60,7 +60,7 @@ export function useIsParticipant() {
   return userRole === 'participant';
 }
 
-// Login mutation
+// Login mutation - uses server-side API for proper cookie handling
 export function useLoginMutation() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -71,24 +71,22 @@ export function useLoginMutation() {
       email: string;
       password: string;
     }) => {
-      const supabase = createBrowserClient();
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      // Call the server-side login API that handles cookies
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
       });
-      if (error) throw error;
-      if (!data.user) throw new Error("No user returned");
-      // Optionally fetch profile
-      let profile = null;
-      try {
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", data.user.id)
-          .single();
-        if (!profileError) profile = profileData;
-      } catch {}
-      return { user: data.user, profile };
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Login failed');
+      }
+
+      const data = await response.json();
+      return data.data; // Contains user, profile, participant, and session
     },
     onSuccess: async (result) => {
       // Refresh claims after successful login
