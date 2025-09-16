@@ -25,10 +25,7 @@ INSERT INTO profiles (
     'participant',
     now(),
     now()
-) ON CONFLICT (id) DO UPDATE SET
-    name = EXCLUDED.name,
-    email = EXCLUDED.email,
-    updated_at = now();
+);
 
 -- Now create the participant record with the specific code
 INSERT INTO participants (
@@ -43,8 +40,7 @@ INSERT INTO participants (
     'LFG-7B38',
     now(),
     now()
-) ON CONFLICT (participant_code) DO UPDATE SET
-    updated_at = now();
+);
 
 -- Show the created participant
 SELECT

@@ -12,6 +12,7 @@ import { Mail, CheckCircle } from "lucide-react";
 import { useAuthContext } from "@/components/providers/auth-provider";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useStations } from "@/lib/hooks/useStations";
+import { useCurrentParticipant } from "@/lib/hooks/useCurrentParticipant";
 import { getIconByName } from "@/lib/utils/icons";
 
 export default function ParticipatePage() {
@@ -19,7 +20,9 @@ export default function ParticipatePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [qrValue, setQrValue] = useState("");
+  const [participantCode, setParticipantCode] = useState<string | null>(null);
   const { data: stations, isLoading: stationsLoading, error: stationsError } = useStations();
+  // const { data: currentParticipant, isLoading: participantLoading, error: participantError } = useCurrentParticipant(user?.id);
 
   // Check if user's email is confirmed
   const isEmailConfirmed = user?.email_confirmed_at != null;
@@ -35,14 +38,46 @@ export default function ParticipatePage() {
     }
   }, [searchParams, user, refreshUser]);
 
+  // Fetch participant code from database
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchParticipantCode = async () => {
+      try {
+        // Fetch the actual participant code from database using user ID
+        const response = await fetch(`/api/participants/by-user/${user.id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setParticipantCode(data.participant_code);
+        } else {
+          // Fallback to generated code if no participant record exists
+          const fallbackCode = `LFG-${user.id.slice(-4).toUpperCase()}`;
+          setParticipantCode(fallbackCode);
+        }
+      } catch (error) {
+        console.error('Error fetching participant code:', error);
+        // Fallback to generated code on error
+        const fallbackCode = `LFG-${user.id.slice(-4).toUpperCase()}`;
+        setParticipantCode(fallbackCode);
+      }
+    };
+
+    fetchParticipantCode();
+  }, [user?.id]);
+
   // Set QR code URL (only for confirmed users)
   useEffect(() => {
-    if (!isEmailConfirmed || !user || !profile) return;
+    if (!isEmailConfirmed || !user || !profile || !participantCode) return;
 
-    const participantCode = `LFG-${user.id.slice(-4).toUpperCase()}`;
     const qrUrl = `${window.location.origin}/stations/${participantCode}`;
     setQrValue(qrUrl);
-  }, [isEmailConfirmed, user, profile]);
+  }, [isEmailConfirmed, user, profile, participantCode]);
 
 
   const handleResendConfirmation = async () => {
@@ -126,7 +161,7 @@ export default function ParticipatePage() {
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Participant Code:</span>
                   <Badge variant="secondary" className="text-lg px-3 py-1">
-                    {user ? `LFG-${user.id.slice(-4).toUpperCase()}` : "Pending"}
+                    {participantCode || "Loading..."}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
@@ -164,13 +199,19 @@ export default function ParticipatePage() {
                 {isEmailConfirmed ? (
                   <>
                     <div className="bg-white p-6 rounded-lg inline-block shadow-sm">
-                      {qrValue && (
+                      {qrValue ? (
                         <QRCodeSVG
                           value={qrValue}
                           size={200}
                           level="M"
                           includeMargin={true}
                         />
+                      ) : (
+                        <div className="w-[200px] h-[200px] flex items-center justify-center border-2 border-dashed border-gray-300">
+                          <div className="text-center text-sm text-gray-500">
+                            Generating QR Code...
+                          </div>
+                        </div>
                       )}
                     </div>
 
