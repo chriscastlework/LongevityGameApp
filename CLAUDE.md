@@ -1,7 +1,7 @@
-USE PNPM
+## USE PNPM
 
-Supabase backend
+## Supabase CLI commands
 
-Database scrips are in @scripts
+# Update Supabase Database models
 
 npx supabase gen types typescript --project-id ihcpikxtxaybuvsvzkqi lib/types/database.types.ts

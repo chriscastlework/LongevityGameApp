@@ -5,8 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AuthenticatedLayout } from "@/components/layout/authenticated-layout";
-import { Users, CheckCircle } from "lucide-react";
+import { Users, CheckCircle, AlertTriangle, Trash2 } from "lucide-react";
 import { StationEntryForm } from "@/components/station/station-entry-form";
 import { useAuthContext } from "@/components/providers/auth-provider";
 import { isOperator } from "@/lib/auth/useApiAuth";
@@ -24,6 +25,9 @@ export default function StationParticipantPage() {
   const { data: participant, isLoading: participantLoading, error: participantError } = useParticipant(participantCode);
   const [selectedStation, setSelectedStation] = useState<StationType | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [existingResult, setExistingResult] = useState<any>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const currentStation = selectedStation && stations ? stations.find(s => s.station_type === selectedStation) : null;
 
@@ -94,6 +98,7 @@ export default function StationParticipantPage() {
 
   const handleStationSelect = (stationId: StationType) => {
     setSelectedStation(stationId);
+    setExistingResult(null); // Clear any existing result when selecting new station
   };
 
   const handleDataSubmit = async (measurements: any) => {
@@ -114,6 +119,19 @@ export default function StationParticipantPage() {
 
       if (!response.ok) {
         const error = await response.json();
+
+        // Handle duplicate result (409 Conflict)
+        if (response.status === 409) {
+          setExistingResult({
+            error: error.error,
+            existingResultId: error.existingResultId,
+            recordedAt: error.recordedAt,
+            stationType: selectedStation,
+            participantCode
+          });
+          return; // Don't throw error, just show existing result
+        }
+
         throw new Error(error.error || 'Failed to save measurements');
       }
 
@@ -131,6 +149,38 @@ export default function StationParticipantPage() {
       console.error("Error saving measurements:", error);
       // You might want to show an error toast or alert here
       alert(`Failed to save measurements: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const handleDeleteExistingResult = async () => {
+    if (!existingResult?.existingResultId) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/station-results?id=${existingResult.existingResultId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete existing result');
+      }
+
+      const result = await response.json();
+      console.log("Successfully deleted existing result:", result);
+
+      // Clear existing result and hide confirmation dialog
+      setExistingResult(null);
+      setShowDeleteConfirm(false);
+
+      // Show success message
+      alert('Existing result has been deleted. You can now enter new measurements.');
+
+    } catch (error) {
+      console.error("Error deleting existing result:", error);
+      alert(`Failed to delete existing result: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -266,11 +316,101 @@ export default function StationParticipantPage() {
                     ← Change Station
                   </Button>
                 </div>
-                <StationEntryForm
-                  station={selectedStation}
-                  participantCode={participantCode}
-                  onSubmit={handleDataSubmit}
-                />
+
+                {/* Show existing result if there's a conflict */}
+                {existingResult && (
+                  <div className="mb-6">
+                    <Alert variant="destructive" className="mb-4">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        {existingResult.error}
+                      </AlertDescription>
+                    </Alert>
+
+                    <Card className="border-orange-200 bg-orange-50 dark:bg-orange-900/10">
+                      <CardHeader>
+                        <CardTitle className="text-orange-800 dark:text-orange-200 flex items-center gap-2">
+                          <AlertTriangle className="h-5 w-5" />
+                          Existing Result Found
+                        </CardTitle>
+                        <CardDescription className="text-orange-700 dark:text-orange-300">
+                          A result has already been recorded for this participant and station.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="text-sm space-y-1">
+                          <p><span className="font-medium">Participant:</span> {existingResult.participantCode}</p>
+                          <p><span className="font-medium">Station:</span> {existingResult.stationType}</p>
+                          <p><span className="font-medium">Recorded:</span> {new Date(existingResult.recordedAt).toLocaleString()}</p>
+                        </div>
+
+                        {showDeleteConfirm ? (
+                          <div className="space-y-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                            <div className="flex items-center gap-2 text-red-800 dark:text-red-200">
+                              <AlertTriangle className="h-5 w-5" />
+                              <span className="font-medium">Confirm Deletion</span>
+                            </div>
+                            <p className="text-sm text-red-700 dark:text-red-300">
+                              Are you sure you want to delete the existing result? This action cannot be undone.
+                            </p>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={handleDeleteExistingResult}
+                                disabled={isDeleting}
+                              >
+                                {isDeleting ? (
+                                  <>
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                    Deleting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Yes, Delete
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setShowDeleteConfirm(false)}
+                                disabled={isDeleting}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <p className="text-sm text-orange-700 dark:text-orange-300">
+                              To enter new measurements, you must first delete the existing result.
+                            </p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowDeleteConfirm(true)}
+                              className="border-orange-300 text-orange-800 hover:bg-orange-100 dark:border-orange-700 dark:text-orange-200 dark:hover:bg-orange-900/20"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Existing Result
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+
+                {/* Only show form if no existing result */}
+                {!existingResult && (
+                  <StationEntryForm
+                    station={selectedStation}
+                    participantCode={participantCode}
+                    onSubmit={handleDataSubmit}
+                  />
+                )}
               </CardContent>
             </Card>
           </div>
