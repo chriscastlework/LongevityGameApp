@@ -4,98 +4,14 @@ import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AuthenticatedLayout } from "@/components/layout/authenticated-layout";
-import { Trophy, Medal, Award, RefreshCw, TrendingUp, Users, Activity } from "lucide-react";
+import { Trophy, Medal, Award, RefreshCw, TrendingUp, Users, Activity, AlertCircle } from "lucide-react";
+import { useLeaderboard } from "@/lib/hooks/useLeaderboard";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import type { LeaderboardEntry, Grade } from "@/lib/types/database";
-
-// Mock leaderboard data - in production this would come from Supabase
-const mockLeaderboardData: LeaderboardEntry[] = [
-  {
-    id: "1",
-    participant_code: "LFG-0001",
-    full_name: "Sarah Johnson",
-    organization: "Tech Corp",
-    gender: "female",
-    score_balance: 3,
-    score_breath: 2,
-    score_grip: 3,
-    score_health: 3,
-    total_score: 11,
-    grade: "Above Average",
-    created_at: "2025-01-15T10:30:00Z",
-    rank: 1,
-  },
-  {
-    id: "2",
-    participant_code: "LFG-0002",
-    full_name: "Mike Chen",
-    organization: "Fitness Plus",
-    gender: "male",
-    score_balance: 2,
-    score_breath: 3,
-    score_grip: 3,
-    score_health: 2,
-    total_score: 10,
-    grade: "Above Average",
-    created_at: "2025-01-15T11:00:00Z",
-    rank: 2,
-  },
-  {
-    id: "3",
-    participant_code: "LFG-0003",
-    full_name: "Emily Davis",
-    organization: "Health Solutions",
-    gender: "female",
-    score_balance: 2,
-    score_breath: 2,
-    score_grip: 2,
-    score_health: 3,
-    total_score: 9,
-    grade: "Average",
-    created_at: "2025-01-15T11:30:00Z",
-    rank: 3,
-  },
-  {
-    id: "4",
-    participant_code: "LFG-0004",
-    full_name: "David Wilson",
-    organization: "Sports Academy",
-    gender: "male",
-    score_balance: 1,
-    score_breath: 2,
-    score_grip: 3,
-    score_health: 2,
-    total_score: 8,
-    grade: "Average",
-    created_at: "2025-01-15T12:00:00Z",
-    rank: 4,
-  },
-  {
-    id: "5",
-    participant_code: "LFG-0005",
-    full_name: "Lisa Rodriguez",
-    organization: "Wellness Center",
-    gender: "female",
-    score_balance: 2,
-    score_breath: 1,
-    score_grip: 2,
-    score_health: 2,
-    total_score: 7,
-    grade: "Average",
-    created_at: "2025-01-15T12:30:00Z",
-    rank: 5,
-  },
-];
-
-const stats = {
-  totalParticipants: mockLeaderboardData.length,
-  avgScore: Math.round((mockLeaderboardData.reduce((sum, p) => sum + (p.total_score || 0), 0) / mockLeaderboardData.length) * 10) / 10,
-  aboveAverage: mockLeaderboardData.filter(p => p.grade === "Above Average").length,
-  topOrganization: "Tech Corp",
-};
 
 function getRankIcon(rank: number) {
   switch (rank) {
@@ -123,19 +39,20 @@ function getScoreColor(score: number | null): string {
 }
 
 export default function LeaderboardPage() {
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [filter, setFilter] = useState<"all" | "male" | "female" | "other">("all");
+  const { data, isLoading, error, refetch } = useLeaderboard(filter);
 
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsRefreshing(false);
+    await refetch(filter);
   };
 
-  const filteredData = filter === "all"
-    ? mockLeaderboardData
-    : mockLeaderboardData.filter(p => p.gender === filter);
+  const leaderboardData = data?.leaderboard || [];
+  const stats = data?.stats || {
+    totalParticipants: 0,
+    avgScore: 0,
+    aboveAverage: 0,
+    topOrganization: "None"
+  };
 
   return (
     <AuthenticatedLayout
@@ -156,13 +73,31 @@ export default function LeaderboardPage() {
           </div>
           <Button
             onClick={handleRefresh}
-            disabled={isRefreshing}
+            disabled={isLoading}
             className="gap-2 self-start sm:self-auto"
           >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
         </div>
+
+        {/* Error Alert */}
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Failed to load leaderboard data: {error}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                className="ml-4"
+              >
+                Try Again
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Stats Cards */}
         <div className="grid md:grid-cols-4 gap-4 mb-8">
@@ -234,23 +169,31 @@ export default function LeaderboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-16">Rank</TableHead>
-                  <TableHead>Participant</TableHead>
-                  <TableHead>Organization</TableHead>
-                  <TableHead className="text-center">Balance</TableHead>
-                  <TableHead className="text-center">Breath</TableHead>
-                  <TableHead className="text-center">Grip</TableHead>
-                  <TableHead className="text-center">Health</TableHead>
-                  <TableHead className="text-center">Total</TableHead>
-                  <TableHead className="text-center">Grade</TableHead>
-                  <TableHead>Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredData.map((participant) => (
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-4 h-4 bg-primary-foreground rounded-full animate-pulse" />
+                </div>
+                <p className="text-muted-foreground">Loading leaderboard...</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-16">Rank</TableHead>
+                    <TableHead>Participant</TableHead>
+                    <TableHead>Organization</TableHead>
+                    <TableHead className="text-center">Balance</TableHead>
+                    <TableHead className="text-center">Breath</TableHead>
+                    <TableHead className="text-center">Grip</TableHead>
+                    <TableHead className="text-center">Health</TableHead>
+                    <TableHead className="text-center">Total</TableHead>
+                    <TableHead className="text-center">Grade</TableHead>
+                    <TableHead>Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {leaderboardData.map((participant) => (
                   <TableRow key={participant.id} className="hover:bg-muted/50">
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
@@ -311,14 +254,16 @@ export default function LeaderboardPage() {
                       {new Date(participant.created_at).toLocaleDateString()}
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
 
-            {filteredData.length === 0 && (
+            {!isLoading && leaderboardData.length === 0 && !error && (
               <div className="text-center py-8 text-muted-foreground">
                 <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No participants found for the selected filter</p>
+                <p>No participants found{filter !== 'all' ? ' for the selected filter' : ''}</p>
+                <p className="text-sm mt-2">Complete your fitness assessment to appear on the leaderboard!</p>
               </div>
             )}
           </CardContent>

@@ -8,11 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AuthenticatedLayout } from "@/components/layout/authenticated-layout";
-import { Mail, CheckCircle } from "lucide-react";
+import { Mail, CheckCircle, Trophy, Target, TrendingUp } from "lucide-react";
 import { useAuthContext } from "@/components/providers/auth-provider";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useStations } from "@/lib/hooks/useStations";
 import { useCurrentParticipant } from "@/lib/hooks/useCurrentParticipant";
+import { useParticipantResults } from "@/lib/hooks/useParticipantResults";
 import { getIconByName } from "@/lib/utils/icons";
 
 export default function ParticipatePage() {
@@ -22,6 +23,7 @@ export default function ParticipatePage() {
   const [qrValue, setQrValue] = useState("");
   const [participantCode, setParticipantCode] = useState<string | null>(null);
   const { data: stations, isLoading: stationsLoading, error: stationsError } = useStations();
+  const { data: participantResults, isLoading: resultsLoading, error: resultsError } = useParticipantResults(user?.id);
   // const { data: currentParticipant, isLoading: participantLoading, error: participantError } = useCurrentParticipant(user?.id);
 
   // Check if user's email is confirmed
@@ -237,8 +239,150 @@ export default function ParticipatePage() {
             </CardContent>
           </Card>
 
-          {/* Stations Information */}
+          {/* Results and Progress */}
           <div className="space-y-6">
+            {isEmailConfirmed && participantResults && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Trophy className="h-5 w-5" />
+                    Your Progress
+                  </CardTitle>
+                  <CardDescription>
+                    Track your fitness assessment results and overall score
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {resultsLoading ? (
+                    <div className="text-center py-8">
+                      <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mx-auto mb-2">
+                        <div className="w-4 h-4 bg-primary-foreground rounded-full animate-pulse" />
+                      </div>
+                      <div className="text-sm text-muted-foreground">Loading your results...</div>
+                    </div>
+                  ) : participantResults ? (
+                    <div className="space-y-6">
+                      {/* Progress Overview */}
+                      <div className="grid md:grid-cols-3 gap-4">
+                        <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                          <Target className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                          <p className="text-2xl font-bold text-blue-600">
+                            {participantResults.progress.completedStations}/{participantResults.progress.totalStations}
+                          </p>
+                          <p className="text-sm text-muted-foreground">Stations Complete</p>
+                        </div>
+
+                        <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                          <TrendingUp className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                          <p className="text-2xl font-bold text-green-600">
+                            {participantResults.progress.totalScore}
+                            {participantResults.progress.maxPossibleScore > 0 && (
+                              <span className="text-sm text-muted-foreground">
+                                /{participantResults.progress.maxPossibleScore}
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-sm text-muted-foreground">Total Score</p>
+                        </div>
+
+                        <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                          <Trophy className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+                          <p className="text-lg font-bold text-purple-600">
+                            {participantResults.progress.grade || "Not Graded"}
+                          </p>
+                          <p className="text-sm text-muted-foreground">Current Grade</p>
+                        </div>
+                      </div>
+
+                      {/* Individual Results */}
+                      {participantResults.results.length > 0 && (
+                        <>
+                          <Separator />
+                          <div>
+                            <h4 className="font-semibold mb-4">Completed Stations</h4>
+                            <div className="grid gap-3">
+                              {participantResults.results.map((result) => {
+                                const station = stations?.find(s => s.station_type === result.stationType);
+                                const IconComponent = station ? getIconByName(station.icon_name) : Target;
+                                const getScoreColor = (score: number) => {
+                                  if (score >= 3) return "text-green-600";
+                                  if (score >= 2) return "text-yellow-600";
+                                  return "text-red-600";
+                                };
+
+                                return (
+                                  <div
+                                    key={result.id}
+                                    className="flex items-center gap-4 p-3 border rounded-lg bg-muted/20"
+                                  >
+                                    <div className={`p-2 rounded-full ${station?.color_class || 'bg-gray-500'} text-white`}>
+                                      <IconComponent className="h-5 w-5" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <h5 className="font-medium">{result.stationName}</h5>
+                                      <p className="text-sm text-muted-foreground">
+                                        {new Date(result.completedAt).toLocaleDateString()}
+                                      </p>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className={`text-lg font-bold ${getScoreColor(result.score)}`}>
+                                        {result.score}/3
+                                      </p>
+                                      <p className="text-xs text-muted-foreground">Score</p>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Remaining Stations */}
+                      {participantResults.progress.remainingStations.length > 0 && (
+                        <>
+                          <Separator />
+                          <div>
+                            <h4 className="font-semibold mb-4">Remaining Stations</h4>
+                            <div className="grid gap-3">
+                              {participantResults.progress.remainingStations.map((stationType) => {
+                                const station = stations?.find(s => s.station_type === stationType);
+                                const IconComponent = station ? getIconByName(station.icon_name) : Target;
+
+                                return station ? (
+                                  <div
+                                    key={station.id}
+                                    className="flex items-center gap-4 p-3 border rounded-lg border-dashed opacity-60"
+                                  >
+                                    <div className={`p-2 rounded-full ${station.color_class} text-white opacity-75`}>
+                                      <IconComponent className="h-5 w-5" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <h5 className="font-medium">{station.name}</h5>
+                                      <p className="text-sm text-muted-foreground">
+                                        {station.description}
+                                      </p>
+                                    </div>
+                                    <Badge variant="outline">Pending</Badge>
+                                  </div>
+                                ) : null;
+                              })}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Complete your first station to see your results here!</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Stations Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Testing Stations</CardTitle>
@@ -262,12 +406,14 @@ export default function ParticipatePage() {
                   <div className="grid gap-4">
                     {stations?.map((station) => {
                       const IconComponent = getIconByName(station.icon_name);
+                      const isCompleted = participantResults?.results.some(r => r.stationType === station.station_type);
+
                       return (
                         <div
                           key={station.id}
                           className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                         >
-                          <div className={`p-3 rounded-full ${station.color_class} text-white`}>
+                          <div className={`p-3 rounded-full ${station.color_class} text-white ${isCompleted ? '' : 'opacity-75'}`}>
                             <IconComponent className="h-6 w-6" />
                           </div>
                           <div className="flex-1">
@@ -276,8 +422,8 @@ export default function ParticipatePage() {
                               {station.description}
                             </p>
                           </div>
-                          <Badge variant="outline">
-                            {isEmailConfirmed ? "Ready" : "Confirm Email"}
+                          <Badge variant={isCompleted ? "default" : "outline"}>
+                            {isCompleted ? "Completed" : isEmailConfirmed ? "Ready" : "Confirm Email"}
                           </Badge>
                         </div>
                       );

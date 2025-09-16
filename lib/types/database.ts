@@ -465,3 +465,49 @@ export const Constants = {
     },
   },
 } as const
+
+// Custom application types
+export type Grade = "Above Average" | "Average" | "Bad";
+
+export type StationType = "balance" | "breath" | "grip" | "health";
+
+export interface BalanceMeasurement {
+  balance_seconds: number;
+}
+
+export interface BreathMeasurement {
+  breath_seconds: number;
+}
+
+export interface GripMeasurement {
+  grip_left_kg: number;
+  grip_right_kg: number;
+}
+
+export interface HealthMeasurement {
+  bp_systolic: number;
+  bp_diastolic: number;
+  pulse: number;
+  bmi: number;
+  muscle_pct: number;
+  fat_pct: number;
+  spo2: number;
+}
+
+export interface LeaderboardEntry {
+  id: string;
+  participant_code: string;
+  full_name: string;
+  organization: string | null;
+  gender: string;
+  score_balance: number | null;
+  score_breath: number | null;
+  score_grip: number | null;
+  score_health: number | null;
+  total_score: number | null;
+  grade: Grade | null;
+  created_at: string;
+  rank: number;
+}
+
+export type StationResultInsert = TablesInsert<"station_results">;
