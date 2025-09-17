@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const genderFilter = url.searchParams.get('gender'); // Optional gender filter
 
-    // First, get all participants with their station results
+    // First, get all participants with their station results including scores
     const { data: participants, error: participantsError } = await supabase
       .from('participants')
       .select(`
@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
         station_results(
           station_type,
           measurements,
+          score,
           created_at
         )
       `);
@@ -66,19 +67,19 @@ export async function GET(request: NextRequest) {
         }
         return profile; // Only include participants that have profiles
       })
-      .map((participant, index) => {
+      .map((participant) => {
         const profile = profileMap.get(participant.user_id);
-        // Extract scores from station results
+        // Extract scores from station results (use stored scores, not recalculated ones)
         const balanceResult = participant.station_results.find(r => r.station_type === 'balance');
         const breathResult = participant.station_results.find(r => r.station_type === 'breath');
         const gripResult = participant.station_results.find(r => r.station_type === 'grip');
         const healthResult = participant.station_results.find(r => r.station_type === 'health');
 
-        // Calculate scores based on measurements (you may need to adjust this logic)
-        const scoreBalance = balanceResult ? calculateBalanceScore(balanceResult.measurements) : null;
-        const scoreBreath = breathResult ? calculateBreathScore(breathResult.measurements) : null;
-        const scoreGrip = gripResult ? calculateGripScore(gripResult.measurements) : null;
-        const scoreHealth = healthResult ? calculateHealthScore(healthResult.measurements) : null;
+        // Use the scores that were properly calculated and stored in the database
+        const scoreBalance = balanceResult?.score || null;
+        const scoreBreath = breathResult?.score || null;
+        const scoreGrip = gripResult?.score || null;
+        const scoreHealth = healthResult?.score || null;
 
         // Calculate total score (only count completed stations)
         const scores = [scoreBalance, scoreBreath, scoreGrip, scoreHealth].filter(s => s !== null) as number[];
@@ -135,57 +136,8 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Helper functions to calculate scores from measurements
-function calculateBalanceScore(measurements: any): number {
-  const balanceSeconds = measurements?.balance_seconds || 0;
-  // Score 1-3 based on balance time (adjust thresholds as needed)
-  if (balanceSeconds >= 45) return 3;
-  if (balanceSeconds >= 25) return 2;
-  return 1;
-}
-
-function calculateBreathScore(measurements: any): number {
-  const breathSeconds = measurements?.breath_seconds || 0;
-  // Score 1-3 based on breath hold time (adjust thresholds as needed)
-  if (breathSeconds >= 60) return 3;
-  if (breathSeconds >= 30) return 2;
-  return 1;
-}
-
-function calculateGripScore(measurements: any): number {
-  const leftGrip = measurements?.grip_left_kg || 0;
-  const rightGrip = measurements?.grip_right_kg || 0;
-  const avgGrip = (leftGrip + rightGrip) / 2;
-  // Score 1-3 based on average grip strength (adjust thresholds as needed)
-  if (avgGrip >= 40) return 3;
-  if (avgGrip >= 25) return 2;
-  return 1;
-}
-
-function calculateHealthScore(measurements: any): number {
-  // Complex health score based on multiple factors
-  // This is a simplified version - you may want to implement more sophisticated scoring
-  const bmi = measurements?.bmi || 22;
-  const spo2 = measurements?.spo2 || 98;
-  const pulse = measurements?.pulse || 72;
-
-  let score = 0;
-
-  // BMI scoring (healthy range gets higher score)
-  if (bmi >= 18.5 && bmi <= 24.9) score += 1;
-  else if (bmi >= 25 && bmi <= 29.9) score += 0.5;
-
-  // SpO2 scoring
-  if (spo2 >= 98) score += 1;
-  else if (spo2 >= 95) score += 0.5;
-
-  // Resting heart rate scoring
-  if (pulse >= 60 && pulse <= 80) score += 1;
-  else if (pulse >= 50 && pulse <= 90) score += 0.5;
-
-  // Convert to 1-3 scale
-  return Math.max(1, Math.min(3, Math.round(score)));
-}
+// Note: Scores are now properly calculated and stored in station_results.score field
+// using the calculateStationScore() function with demographic-based thresholds
 
 function calculateGrade(totalScore: number, completedStations: number): "Above Average" | "Average" | "Bad" {
   const maxPossibleScore = completedStations * 3;
