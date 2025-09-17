@@ -70,10 +70,10 @@ interface StationEntryFormProps {
   station: StationType;
   participantCode: string;
   onSubmit: (data: BalanceMeasurement | BreathMeasurement | GripMeasurement | HealthMeasurement) => void;
+  isSubmitting?: boolean;
 }
 
-export function StationEntryForm({ station, participantCode, onSubmit }: StationEntryFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export function StationEntryForm({ station, participantCode, onSubmit, isSubmitting = false }: StationEntryFormProps) {
   const [error, setError] = useState<string | null>(null);
 
   // Get the appropriate schema and default values based on station type
@@ -124,16 +124,12 @@ export function StationEntryForm({ station, participantCode, onSubmit }: Station
 
 
   const handleSubmit = async (data: any) => {
-    setIsSubmitting(true);
     setError(null);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-      onSubmit(data);
+      await onSubmit(data);
     } catch (err: any) {
       setError(err.message || "Failed to submit measurements");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

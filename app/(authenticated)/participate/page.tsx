@@ -303,7 +303,7 @@ export default function ParticipatePage() {
                             <div className="grid gap-3">
                               {participantResults.results.map((result) => {
                                 const station = stations?.find(s => s.station_type === result.stationType);
-                                const IconComponent = station ? getIconByName(station.icon_name) : Target;
+                                const IconComponent = station && station.icon_name ? getIconByName(station.icon_name) : Target;
                                 const getScoreColor = (score: number) => {
                                   if (score >= 3) return "text-green-600";
                                   if (score >= 2) return "text-yellow-600";
@@ -347,7 +347,7 @@ export default function ParticipatePage() {
                             <div className="grid gap-3">
                               {participantResults.progress.remainingStations.map((stationType) => {
                                 const station = stations?.find(s => s.station_type === stationType);
-                                const IconComponent = station ? getIconByName(station.icon_name) : Target;
+                                const IconComponent = station && station.icon_name ? getIconByName(station.icon_name) : Target;
 
                                 return station ? (
                                   <div
@@ -405,7 +405,7 @@ export default function ParticipatePage() {
                 ) : (
                   <div className="grid gap-4">
                     {stations?.map((station) => {
-                      const IconComponent = getIconByName(station.icon_name);
+                      const IconComponent = station.icon_name ? getIconByName(station.icon_name) : Target;
                       const isCompleted = participantResults?.results.some(r => r.stationType === station.station_type);
 
                       return (

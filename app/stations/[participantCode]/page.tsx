@@ -13,6 +13,7 @@ import { useAuthContext } from "@/components/providers/auth-provider";
 import { isOperator } from "@/lib/auth/useApiAuth";
 import { useStations } from "@/lib/hooks/useStations";
 import { useParticipant } from "@/lib/hooks/useParticipant";
+import { useSubmitStationResult, useDeleteStationResult } from "@/lib/hooks/useStationResults";
 import { getIconByName } from "@/lib/utils/icons";
 import type { StationType } from "@/lib/types/database";
 
@@ -23,11 +24,12 @@ export default function StationParticipantPage() {
   const { isAuthenticated, isLoading, user, profile } = useAuthContext();
   const { data: stations, isLoading: stationsLoading, error: stationsError } = useStations();
   const { data: participant, isLoading: participantLoading, error: participantError } = useParticipant(participantCode);
+  const submitStationResult = useSubmitStationResult();
+  const deleteStationResult = useDeleteStationResult();
   const [selectedStation, setSelectedStation] = useState<StationType | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [existingResult, setExistingResult] = useState<any>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const currentStation = selectedStation && stations ? stations.find(s => s.station_type === selectedStation) : null;
 
@@ -105,39 +107,13 @@ export default function StationParticipantPage() {
     if (!selectedStation) return;
 
     try {
-      const response = await fetch('/api/station-results', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          participantCode,
-          stationType: selectedStation,
-          measurements,
-        }),
+      await submitStationResult.mutateAsync({
+        participantCode,
+        stationType: selectedStation,
+        measurements,
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-
-        // Handle duplicate result (409 Conflict)
-        if (response.status === 409) {
-          setExistingResult({
-            error: error.error,
-            existingResultId: error.existingResultId,
-            recordedAt: error.recordedAt,
-            stationType: selectedStation,
-            participantCode
-          });
-          return; // Don't throw error, just show existing result
-        }
-
-        throw new Error(error.error || 'Failed to save measurements');
-      }
-
-      const result = await response.json();
-      console.log("Successfully saved measurements:", result);
-
+      // Success! Show confirmation and reset
       setSubmitted(true);
 
       // Reset after a delay
@@ -145,9 +121,20 @@ export default function StationParticipantPage() {
         setSubmitted(false);
         setSelectedStation(null);
       }, 3000);
-    } catch (error) {
+    } catch (error: any) {
+      // Handle duplicate result (409 Conflict)
+      if (error.isConflict) {
+        setExistingResult({
+          error: error.message,
+          existingResultId: error.existingResultId || 'unknown',
+          recordedAt: error.recordedAt || new Date().toISOString(),
+          stationType: selectedStation,
+          participantCode
+        });
+        return;
+      }
+
       console.error("Error saving measurements:", error);
-      // You might want to show an error toast or alert here
       alert(`Failed to save measurements: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
@@ -155,19 +142,8 @@ export default function StationParticipantPage() {
   const handleDeleteExistingResult = async () => {
     if (!existingResult?.existingResultId) return;
 
-    setIsDeleting(true);
     try {
-      const response = await fetch(`/api/station-results?id=${existingResult.existingResultId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete existing result');
-      }
-
-      const result = await response.json();
-      console.log("Successfully deleted existing result:", result);
+      await deleteStationResult.mutateAsync(existingResult.existingResultId);
 
       // Clear existing result and hide confirmation dialog
       setExistingResult(null);
@@ -179,8 +155,6 @@ export default function StationParticipantPage() {
     } catch (error) {
       console.error("Error deleting existing result:", error);
       alert(`Failed to delete existing result: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -358,9 +332,9 @@ export default function StationParticipantPage() {
                                 variant="destructive"
                                 size="sm"
                                 onClick={handleDeleteExistingResult}
-                                disabled={isDeleting}
+                                disabled={deleteStationResult.isPending}
                               >
-                                {isDeleting ? (
+                                {deleteStationResult.isPending ? (
                                   <>
                                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                                     Deleting...
@@ -376,7 +350,7 @@ export default function StationParticipantPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setShowDeleteConfirm(false)}
-                                disabled={isDeleting}
+                                disabled={deleteStationResult.isPending}
                               >
                                 Cancel
                               </Button>
@@ -409,6 +383,7 @@ export default function StationParticipantPage() {
                     station={selectedStation}
                     participantCode={participantCode}
                     onSubmit={handleDataSubmit}
+                    isSubmitting={submitStationResult.isPending}
                   />
                 )}
               </CardContent>

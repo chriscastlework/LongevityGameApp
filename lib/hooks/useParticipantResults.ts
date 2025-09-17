@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from "@tanstack/react-query";
 
 interface ParticipantResult {
   id: string;
@@ -25,77 +25,70 @@ interface ParticipantResultsData {
   progress: ParticipantProgress;
 }
 
-interface UseParticipantResultsResult {
-  data: ParticipantResultsData | null;
-  isLoading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
-}
+// Query key for participant results data
+export const participantResultsQueryKey = (userId: string) => ["participantResults", userId] as const;
 
-export function useParticipantResults(userId: string | undefined): UseParticipantResultsResult {
-  const [data, setData] = useState<ParticipantResultsData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchResults = async () => {
-    if (!userId) {
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await fetch(`/api/participants/${userId}/results`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          // Participant not found is not really an error - just no results yet
-          setData({
-            participantCode: '',
-            results: [],
-            progress: {
-              completedStations: 0,
-              totalStations: 4,
-              remainingStations: ['balance', 'breath', 'grip', 'health'],
-              totalScore: 0,
-              maxPossibleScore: 0,
-              grade: null
-            }
-          });
-          return;
-        }
-        throw new Error(`Failed to fetch results: ${response.status}`);
+export function useParticipantResults(userId: string | undefined) {
+  return useQuery({
+    queryKey: participantResultsQueryKey(userId || ''),
+    queryFn: async (): Promise<ParticipantResultsData> => {
+      if (!userId) {
+        // Return default empty data if no userId
+        return {
+          participantCode: '',
+          results: [],
+          progress: {
+            completedStations: 0,
+            totalStations: 4,
+            remainingStations: ['balance', 'breath', 'grip', 'health'],
+            totalScore: 0,
+            maxPossibleScore: 0,
+            grade: null
+          }
+        };
       }
 
-      const result = await response.json();
-      setData(result);
-    } catch (err) {
-      console.error('Error fetching participant results:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch results');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      try {
+        console.log("🔄 Fetching participant results for user:", userId);
+        const response = await fetch(`/api/participants/by-user/${userId}/results`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
 
-  const refetch = async () => {
-    await fetchResults();
-  };
+        if (!response.ok) {
+          if (response.status === 404) {
+            // Participant not found is not really an error - just no results yet
+            console.log("📭 No participant results found, returning default data");
+            return {
+              participantCode: '',
+              results: [],
+              progress: {
+                completedStations: 0,
+                totalStations: 4,
+                remainingStations: ['balance', 'breath', 'grip', 'health'],
+                totalScore: 0,
+                maxPossibleScore: 0,
+                grade: null
+              }
+            };
+          }
+          throw new Error(`Failed to fetch results: ${response.status}`);
+        }
 
-  useEffect(() => {
-    fetchResults();
-  }, [userId]);
-
-  return {
-    data,
-    isLoading,
-    error,
-    refetch
-  };
+        const result = await response.json();
+        console.log("✅ Participant results received:", result);
+        return result;
+      } catch (error) {
+        console.error('❌ Error fetching participant results:', error);
+        throw error;
+      }
+    },
+    enabled: !!userId, // Only run query if userId exists
+    staleTime: 30 * 1000, // 30 seconds - shorter than stations since results change more frequently
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+  });
 }
