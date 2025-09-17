@@ -54,9 +54,8 @@ interface ThresholdFormData {
   metric_name: MetricName;
   gender: Gender;
   age_group: AgeGroup;
-  score_1_max: number;
-  score_2_max: number;
-  score_3_min: number;
+  average_score_min: number;
+  average_score_max: number;
   description: string;
   is_active: boolean;
 }
@@ -83,9 +82,8 @@ export default function AdminScoringThresholdsPage() {
     metric_name: "balance_seconds",
     gender: "male",
     age_group: "18-25",
-    score_1_max: 0,
-    score_2_max: 0,
-    score_3_min: 0,
+    average_score_min: 0,
+    average_score_max: 0,
     description: "",
     is_active: true
   });
@@ -162,9 +160,8 @@ export default function AdminScoringThresholdsPage() {
       metric_name: threshold.metric_name as MetricName,
       gender: threshold.gender as Gender,
       age_group: threshold.age_group as AgeGroup,
-      score_1_max: threshold.score_1_max || 0,
-      score_2_max: threshold.score_2_max || 0,
-      score_3_min: threshold.score_3_min || 0,
+      average_score_min: threshold.average_score_min || 0,
+      average_score_max: threshold.average_score_max || 0,
       description: threshold.description || "",
       is_active: threshold.is_active
     });
@@ -177,9 +174,8 @@ export default function AdminScoringThresholdsPage() {
       metric_name: "balance_seconds",
       gender: "male",
       age_group: "18-25",
-      score_1_max: 0,
-      score_2_max: 0,
-      score_3_min: 0,
+      average_score_min: 0,
+      average_score_max: 0,
       description: "",
       is_active: true
     });
@@ -336,50 +332,41 @@ export default function AdminScoringThresholdsPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="score_1_max">Score 1 Max</Label>
+                        <Label htmlFor="average_score_min">Average Score Min</Label>
                         <Input
-                          id="score_1_max"
+                          id="average_score_min"
                           type="number"
                           step="0.1"
-                          value={formData.score_1_max}
+                          value={formData.average_score_min}
                           onChange={(e) => setFormData(prev => ({
                             ...prev,
-                            score_1_max: parseFloat(e.target.value) || 0
+                            average_score_min: parseFloat(e.target.value) || 0
                           }))}
                           required
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Values below this get Score 1
+                        </p>
                       </div>
 
                       <div>
-                        <Label htmlFor="score_2_max">Score 2 Max</Label>
+                        <Label htmlFor="average_score_max">Average Score Max</Label>
                         <Input
-                          id="score_2_max"
+                          id="average_score_max"
                           type="number"
                           step="0.1"
-                          value={formData.score_2_max}
+                          value={formData.average_score_max}
                           onChange={(e) => setFormData(prev => ({
                             ...prev,
-                            score_2_max: parseFloat(e.target.value) || 0
+                            average_score_max: parseFloat(e.target.value) || 0
                           }))}
                           required
                         />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="score_3_min">Score 3 Min</Label>
-                        <Input
-                          id="score_3_min"
-                          type="number"
-                          step="0.1"
-                          value={formData.score_3_min}
-                          onChange={(e) => setFormData(prev => ({
-                            ...prev,
-                            score_3_min: parseFloat(e.target.value) || 0
-                          }))}
-                          required
-                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Values above this get Score 3
+                        </p>
                       </div>
                     </div>
 
@@ -534,9 +521,8 @@ export default function AdminScoringThresholdsPage() {
                       <TableHead>Metric</TableHead>
                       <TableHead>Gender</TableHead>
                       <TableHead>Age Group</TableHead>
-                      <TableHead>Score 1 Max</TableHead>
-                      <TableHead>Score 2 Max</TableHead>
-                      <TableHead>Score 3 Min</TableHead>
+                      <TableHead>Average Min</TableHead>
+                      <TableHead>Average Max</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -559,13 +545,10 @@ export default function AdminScoringThresholdsPage() {
                           {threshold.age_group}
                         </TableCell>
                         <TableCell>
-                          {threshold.score_1_max}
+                          {threshold.average_score_min}
                         </TableCell>
                         <TableCell>
-                          {threshold.score_2_max}
-                        </TableCell>
-                        <TableCell>
-                          {threshold.score_3_min}
+                          {threshold.average_score_max}
                         </TableCell>
                         <TableCell>
                           <Badge variant={threshold.is_active ? "default" : "secondary"}>
@@ -647,50 +630,41 @@ export default function AdminScoringThresholdsPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="edit_score_1_max">Score 1 Max</Label>
+                    <Label htmlFor="edit_average_score_min">Average Score Min</Label>
                     <Input
-                      id="edit_score_1_max"
+                      id="edit_average_score_min"
                       type="number"
                       step="0.1"
-                      value={formData.score_1_max}
+                      value={formData.average_score_min}
                       onChange={(e) => setFormData(prev => ({
                         ...prev,
-                        score_1_max: parseFloat(e.target.value) || 0
+                        average_score_min: parseFloat(e.target.value) || 0
                       }))}
                       required
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Values below this get Score 1
+                    </p>
                   </div>
 
                   <div>
-                    <Label htmlFor="edit_score_2_max">Score 2 Max</Label>
+                    <Label htmlFor="edit_average_score_max">Average Score Max</Label>
                     <Input
-                      id="edit_score_2_max"
+                      id="edit_average_score_max"
                       type="number"
                       step="0.1"
-                      value={formData.score_2_max}
+                      value={formData.average_score_max}
                       onChange={(e) => setFormData(prev => ({
                         ...prev,
-                        score_2_max: parseFloat(e.target.value) || 0
+                        average_score_max: parseFloat(e.target.value) || 0
                       }))}
                       required
                     />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="edit_score_3_min">Score 3 Min</Label>
-                    <Input
-                      id="edit_score_3_min"
-                      type="number"
-                      step="0.1"
-                      value={formData.score_3_min}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        score_3_min: parseFloat(e.target.value) || 0
-                      }))}
-                      required
-                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Values above this get Score 3
+                    </p>
                   </div>
                 </div>
 

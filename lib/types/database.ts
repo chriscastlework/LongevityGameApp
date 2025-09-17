@@ -259,9 +259,8 @@ export type Database = {
           metric_name: string
           gender: string
           age_group: string
-          score_1_max: number | null
-          score_2_max: number | null
-          score_3_min: number | null
+          average_score_min: number | null
+          average_score_max: number | null
           description: string | null
           is_active: boolean
         }
@@ -273,9 +272,8 @@ export type Database = {
           metric_name: string
           gender: string
           age_group: string
-          score_1_max?: number | null
-          score_2_max?: number | null
-          score_3_min?: number | null
+          average_score_min?: number | null
+          average_score_max?: number | null
           description?: string | null
           is_active?: boolean
         }
@@ -287,9 +285,8 @@ export type Database = {
           metric_name?: string
           gender?: string
           age_group?: string
-          score_1_max?: number | null
-          score_2_max?: number | null
-          score_3_min?: number | null
+          average_score_min?: number | null
+          average_score_max?: number | null
           description?: string | null
           is_active?: boolean
         }
