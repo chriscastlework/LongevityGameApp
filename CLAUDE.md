@@ -1,5 +1,7 @@
 ## USE PNPM
 
+## Never use trigger in supabase!
+
 ## Supabase CLI commands
 
 # Link to your supabase project

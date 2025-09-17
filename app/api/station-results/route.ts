@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient, createRouteHandlerClient } from "@/lib/supabase/server";
 import type { StationType, BalanceMeasurement, BreathMeasurement, GripMeasurement, HealthMeasurement, StationResultInsert } from "@/lib/types/database";
+import { calculateStationScore, type MeasurementData } from "@/lib/scoring/calculator";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-type MeasurementData = BalanceMeasurement | BreathMeasurement | GripMeasurement | HealthMeasurement;
 
 interface StationResultRequest {
   participantCode: string;
@@ -105,12 +105,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create a new station result record
+    // Calculate the score using application logic
+    const calculatedScore = await calculateStationScore(participant.id, stationType, measurements);
+
+    // Create a new station result record with calculated score
     const stationResultData: StationResultInsert = {
       participant_id: participant.id,
       station_id: station.id,
       station_type: stationType,
       measurements: measurements as any, // JSONB field - cast to bypass type checking
+      score: calculatedScore,
       recorded_by: user.id
     };
 
@@ -150,6 +154,7 @@ export async function POST(request: NextRequest) {
       participant_code: participantCode,
       station_type: stationType,
       measurements: measurements,
+      score: calculatedScore,
       created_at: stationResult.created_at
     });
 
