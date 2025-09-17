@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/sheet";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { useAuthContext } from "@/components/providers/auth-provider";
-import { Menu, Users, User, Settings, QrCode } from "lucide-react";
+import { Menu, Users, User, Settings, QrCode, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigationItems = [
@@ -29,6 +29,13 @@ const navigationItems = [
     href: "/leaderboard",
     icon: Users,
     description: "View rankings and scores",
+  },
+  {
+    title: "Scoring Thresholds",
+    href: "/admin/scoring-thresholds",
+    icon: BarChart3,
+    description: "Manage scoring thresholds and demographics",
+    adminOnly: true,
   },
 ];
 
@@ -87,7 +94,11 @@ export function MobileAuthHeader({
           {/* Desktop Navigation - Hidden on mobile */}
           <nav className="hidden lg:flex items-center gap-6">
             {navigationItems.map((item) => {
-              // Show all navigation items for desktop
+              // Only show admin items if user is admin
+              if (item.adminOnly && profile?.role !== 'admin') {
+                return null;
+              }
+
               const Icon = item.icon;
               const isActive =
                 pathname === item.href ||
@@ -160,6 +171,11 @@ export function MobileAuthHeader({
               {/* Navigation Links */}
               <nav className="mt-6 space-y-1">
                 {navigationItems.map((item) => {
+                  // Only show admin items if user is admin
+                  if (item.adminOnly && profile?.role !== 'admin') {
+                    return null;
+                  }
+
                   const Icon = item.icon;
                   const isActive =
                     pathname === item.href ||
