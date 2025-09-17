@@ -10,6 +10,10 @@ supabase link --project-ref ihcpikxtxaybuvsvzkqi
 
 npx supabase gen types typescript --project-id ihcpikxtxaybuvsvzkqi > lib/types/database.types.ts
 
-# Update the sql database script
+# Get current db
 
-supabase db dump --file full-dump.sql
+supabase db pull
+
+# Run db migrations
+
+supabase db push
