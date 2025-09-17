@@ -206,6 +206,7 @@ export type Database = {
           measurements: Json
           participant_id: string
           recorded_by: string
+          score: number | null
           station_id: string
           station_type: string
           updated_at: string
@@ -216,6 +217,7 @@ export type Database = {
           measurements: Json
           participant_id: string
           recorded_by: string
+          score?: number | null
           station_id: string
           station_type: string
           updated_at?: string
@@ -226,6 +228,7 @@ export type Database = {
           measurements?: Json
           participant_id?: string
           recorded_by?: string
+          score?: number | null
           station_id?: string
           station_type?: string
           updated_at?: string
@@ -246,6 +249,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      scoring_thresholds: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          station_type: string
+          metric_name: string
+          gender: string
+          age_group: string
+          score_1_max: number | null
+          score_2_max: number | null
+          score_3_min: number | null
+          description: string | null
+          is_active: boolean
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          station_type: string
+          metric_name: string
+          gender: string
+          age_group: string
+          score_1_max?: number | null
+          score_2_max?: number | null
+          score_3_min?: number | null
+          description?: string | null
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          station_type?: string
+          metric_name?: string
+          gender?: string
+          age_group?: string
+          score_1_max?: number | null
+          score_2_max?: number | null
+          score_3_min?: number | null
+          description?: string | null
+          is_active?: boolean
+        }
+        Relationships: []
       }
       stations: {
         Row: {
@@ -295,12 +343,30 @@ export type Database = {
         Args: { required_roles: Database["public"]["Enums"]["user_role"][] }
         Returns: boolean
       }
+      calculate_measurement_score: {
+        Args: {
+          p_station_type: string
+          p_metric_name: string
+          p_value: number
+          p_gender: string
+          p_age_group: string
+        }
+        Returns: number
+      }
+      calculate_station_score: {
+        Args: { p_station_result_id: string }
+        Returns: number
+      }
       compute_scores_for_participant: {
         Args: { p_id: string }
         Returns: undefined
       }
       generate_participant_code: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_age_group: {
+        Args: { date_of_birth: string }
         Returns: string
       }
       get_user_role: {
@@ -323,6 +389,10 @@ export type Database = {
           score_health: number
           total_score: number
         }[]
+      }
+      recalculate_all_scores: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       set_user_role: {
         Args: {
@@ -471,6 +541,22 @@ export type Grade = "Above Average" | "Average" | "Bad";
 
 export type StationType = "balance" | "breath" | "grip" | "health";
 
+export type AgeGroup = "18-25" | "26-35" | "36-45" | "46-55" | "56-65" | "65+";
+
+export type MetricName =
+  | "balance_seconds"
+  | "balloon_diameter_cm"
+  | "grip_seconds"
+  | "bp_systolic"
+  | "bp_diastolic"
+  | "pulse"
+  | "bmi"
+  | "muscle_pct"
+  | "fat_pct"
+  | "spo2";
+
+export type Gender = "male" | "female";
+
 export interface BalanceMeasurement {
   balance_seconds: number;
 }
@@ -510,6 +596,9 @@ export interface LeaderboardEntry {
 }
 
 export type StationResultInsert = TablesInsert<"station_results">;
+export type ScoringThreshold = Tables<"scoring_thresholds">;
+export type ScoringThresholdInsert = TablesInsert<"scoring_thresholds">;
+export type ScoringThresholdUpdate = TablesUpdate<"scoring_thresholds">;
 
 // Additional type exports for existing code compatibility
 export type UserRole = Database["public"]["Enums"]["user_role"];
