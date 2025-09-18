@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
         data: {
           full_name: fullName,
         },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/participate?confirmed=true`
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/participate?confirmed=true`,
       },
     });
 
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
         gender: gender as "male" | "female",
         job_title: jobTitle,
         organisation: organization, // Convert American to British spelling
-        role: 'participant', // Default role for new signups
+        role: "participant", // Default role for new signups
       };
 
       console.log("Creating profile...");
@@ -154,11 +154,32 @@ export async function POST(request: NextRequest) {
 
       console.log("Profile created:", profile?.id);
 
-      // Step 3: Create participant record
+      // Step 3: Generate participant code
+      console.log("Generating participant code...");
+      const { data: participantCodeData, error: codeError } =
+        await adminClient.rpc("generate_participant_code");
+
+      if (codeError || !participantCodeData) {
+        console.error("Participant code generation error:", codeError);
+        // Clean up profile
+        await adminClient.from("profiles").delete().eq("id", authData.user.id);
+        throw new Error(
+          `Participant code generation failed: ${
+            codeError?.message || "No code returned"
+          }`
+        );
+      }
+
+      // Step 4: Create participant record
       console.log("Creating participant...");
       const { data: participant, error: participantError } = await adminClient
         .from("participants")
-        .insert([{ user_id: authData.user.id }])
+        .insert([
+          {
+            user_id: authData.user.id,
+            participant_code: participantCodeData,
+          },
+        ])
         .select()
         .single();
 

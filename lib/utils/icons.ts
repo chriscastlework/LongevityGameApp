@@ -8,8 +8,8 @@ import {
   AlertCircle,
   Info,
   Settings,
-  LucideIcon
-} from 'lucide-react';
+  LucideIcon,
+} from "lucide-react";
 
 // Map of icon names to Lucide icon components
 export const iconMap: Record<string, LucideIcon> = {
@@ -25,8 +25,8 @@ export const iconMap: Record<string, LucideIcon> = {
 };
 
 // Get icon component by name, with fallback to Activity
-export function getIconByName(iconName: string): LucideIcon {
-  return iconMap[iconName] || Activity;
+export function getIconByName(iconName: string | null): LucideIcon {
+  return iconMap[iconName || ""] || Activity;
 }
 
 // Get all available icon names

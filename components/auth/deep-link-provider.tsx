@@ -6,6 +6,7 @@ import React, {
   useEffect,
   useState,
   useCallback,
+  Suspense,
 } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
@@ -61,7 +62,7 @@ const STORAGE_KEYS = {
   CONTEXT_BACKUP: "auth_context_backup",
 } as const;
 
-export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
+function DeepLinkProviderContent({ children }: DeepLinkProviderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -265,6 +266,23 @@ export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
     <DeepLinkContext.Provider value={value}>
       {children}
     </DeepLinkContext.Provider>
+  );
+}
+
+export function DeepLinkProvider({ children }: DeepLinkProviderProps) {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mb-2">
+            <div className="w-4 h-4 bg-primary-foreground rounded-full" />
+          </div>
+          <div className="text-sm text-muted-foreground">Loading...</div>
+        </div>
+      </div>
+    }>
+      <DeepLinkProviderContent>{children}</DeepLinkProviderContent>
+    </Suspense>
   );
 }
 

@@ -13,25 +13,49 @@ export default function SignupPage() {
   const { isAuthenticated } = useAuthContext();
 
   if (isAuthenticated) {
-    return <AuthRedirect />;
+    return (
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mb-2">
+              <div className="w-4 h-4 bg-primary-foreground rounded-full" />
+            </div>
+            <div className="text-sm text-muted-foreground">Redirecting...</div>
+          </div>
+        </div>
+      }>
+        <AuthRedirect />
+      </Suspense>
+    );
   }
 
   return (
-    <DeepLinkProvider>
-      <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-background">
-        {/* Background Image */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30"
-          style={{
-            backgroundImage: "url(/images/mountain-landscape.jpg)",
-          }}
-        />
-
-        {/* Content */}
-        <div className="relative z-10 w-full max-w-md p-6">
-          <ParticipantSignupForm />
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mb-2">
+            <div className="w-4 h-4 bg-primary-foreground rounded-full" />
+          </div>
+          <div className="text-sm text-muted-foreground">Loading...</div>
         </div>
       </div>
-    </DeepLinkProvider>
+    }>
+      <DeepLinkProvider>
+        <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-background">
+          {/* Background Image */}
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30"
+            style={{
+              backgroundImage: "url(/images/mountain-landscape.jpg)",
+            }}
+          />
+
+          {/* Content */}
+          <div className="relative z-10 w-full max-w-md p-6">
+            <ParticipantSignupForm />
+          </div>
+        </div>
+      </DeepLinkProvider>
+    </Suspense>
   );
 }

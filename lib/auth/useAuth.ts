@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient as createBrowserClient } from "@/lib/supabase/client";
-import type { ParticipantProfileInsert, SignupFormData, UserRole } from "@/lib/types/database";
+import type {
+  ParticipantProfileInsert,
+  SignupFormData,
+  UserRole,
+} from "@/lib/types/database";
+import { SignupData } from "../api/auth";
 
 // Fetch current user session/profile
 export function useAuthQuery() {
@@ -47,17 +52,17 @@ export function useHasRole(requiredRole: UserRole) {
 }
 
 export function useIsAdmin() {
-  return useHasRole('admin');
+  return useHasRole("admin");
 }
 
 export function useIsOperator() {
   const userRole = useUserRole();
-  return userRole === 'operator' || userRole === 'admin';
+  return userRole === "operator" || userRole === "admin";
 }
 
 export function useIsParticipant() {
   const userRole = useUserRole();
-  return userRole === 'participant';
+  return userRole === "participant";
 }
 
 // Login mutation - uses server-side API for proper cookie handling
@@ -72,17 +77,17 @@ export function useLoginMutation() {
       password: string;
     }) => {
       // Call the server-side login API that handles cookies
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Login failed');
+        throw new Error(errorData.error || "Login failed");
       }
 
       const data = await response.json();
@@ -91,14 +96,14 @@ export function useLoginMutation() {
     onSuccess: async (result) => {
       // Refresh claims after successful login
       try {
-        await fetch('/api/auth/hooks/set-claims', {
-          method: 'POST',
+        await fetch("/api/auth/hooks/set-claims", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         });
       } catch (error) {
-        console.warn('Failed to refresh claims:', error);
+        console.warn("Failed to refresh claims:", error);
       }
 
       queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
@@ -110,12 +115,12 @@ export function useLoginMutation() {
 export function useParticipantSignupMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (formData: SignupFormData) => {
+    mutationFn: async (formData: SignupData) => {
       // Call the server-side signup API that handles everything in one transaction
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           fullName: formData.fullName,
@@ -130,7 +135,7 @@ export function useParticipantSignupMutation() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Signup failed');
+        throw new Error(errorData.error || "Signup failed");
       }
 
       const data = await response.json();

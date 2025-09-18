@@ -27,7 +27,20 @@ export default function LoginPage() {
   }
 
   if (isAuthenticated) {
-    return <AuthRedirect />;
+    return (
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mb-2">
+              <div className="w-4 h-4 bg-primary-foreground rounded-full" />
+            </div>
+            <div className="text-sm text-muted-foreground">Redirecting...</div>
+          </div>
+        </div>
+      }>
+        <AuthRedirect />
+      </Suspense>
+    );
   }
 
   return (

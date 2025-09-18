@@ -2,7 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -13,7 +19,10 @@ import { useAuthContext } from "@/components/providers/auth-provider";
 import { isOperator } from "@/lib/auth/useApiAuth";
 import { useStations } from "@/lib/hooks/useStations";
 import { useParticipant } from "@/lib/hooks/useParticipant";
-import { useSubmitStationResult, useDeleteStationResult } from "@/lib/hooks/useStationResults";
+import {
+  useSubmitStationResult,
+  useDeleteStationResult,
+} from "@/lib/hooks/useStationResults";
 import { getIconByName } from "@/lib/utils/icons";
 import type { StationType } from "@/lib/types/database";
 
@@ -22,22 +31,37 @@ export default function StationParticipantPage() {
   const router = useRouter();
   const participantCode = params.participantCode as string;
   const { isAuthenticated, isLoading, user, profile } = useAuthContext();
-  const { data: stations, isLoading: stationsLoading, error: stationsError } = useStations();
-  const { data: participant, isLoading: participantLoading, error: participantError } = useParticipant(participantCode);
+  const {
+    data: stations,
+    isLoading: stationsLoading,
+    error: stationsError,
+  } = useStations();
+  const {
+    data: participant,
+    isLoading: participantLoading,
+    error: participantError,
+  } = useParticipant(participantCode);
   const submitStationResult = useSubmitStationResult();
   const deleteStationResult = useDeleteStationResult();
-  const [selectedStation, setSelectedStation] = useState<StationType | null>(null);
+  const [selectedStation, setSelectedStation] = useState<StationType | null>(
+    null
+  );
   const [submitted, setSubmitted] = useState(false);
   const [existingResult, setExistingResult] = useState<any>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const currentStation = selectedStation && stations ? stations.find(s => s.station_type === selectedStation) : null;
+  const currentStation =
+    selectedStation && stations
+      ? stations.find((s) => s.station_type === selectedStation)
+      : null;
 
   // Redirect to login if not authenticated, preserving the current URL
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       const currentPath = `/stations/${participantCode}`;
-      const loginUrl = `/auth/login?redirect=${encodeURIComponent(currentPath)}`;
+      const loginUrl = `/auth/login?redirect=${encodeURIComponent(
+        currentPath
+      )}`;
       router.push(loginUrl);
     }
   }, [isAuthenticated, isLoading, participantCode, router]);
@@ -80,13 +104,14 @@ export default function StationParticipantPage() {
                 Access Denied
               </h2>
               <p className="text-gray-600 dark:text-gray-300 mb-4">
-                This page is only accessible to users with operator or admin roles.
+                This page is only accessible to users with operator or admin
+                roles.
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Your current role: {profile?.role || 'Unknown'}
+                Your current role: {profile?.role || "Unknown"}
               </p>
               <Button
-                onClick={() => router.push('/participate')}
+                onClick={() => router.push("/participate")}
                 className="mt-4"
               >
                 Go to Participate Page
@@ -126,16 +151,20 @@ export default function StationParticipantPage() {
       if (error.isConflict) {
         setExistingResult({
           error: error.message,
-          existingResultId: error.existingResultId || 'unknown',
+          existingResultId: error.existingResultId || "unknown",
           recordedAt: error.recordedAt || new Date().toISOString(),
           stationType: selectedStation,
-          participantCode
+          participantCode,
         });
         return;
       }
 
       console.error("Error saving measurements:", error);
-      alert(`Failed to save measurements: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(
+        `Failed to save measurements: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   };
 
@@ -150,11 +179,16 @@ export default function StationParticipantPage() {
       setShowDeleteConfirm(false);
 
       // Show success message
-      alert('Existing result has been deleted. You can now enter new measurements.');
-
+      alert(
+        "Existing result has been deleted. You can now enter new measurements."
+      );
     } catch (error) {
       console.error("Error deleting existing result:", error);
-      alert(`Failed to delete existing result: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(
+        `Failed to delete existing result: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   };
 
@@ -175,7 +209,10 @@ export default function StationParticipantPage() {
           </div>
           <div className="space-y-2">
             <p className="text-lg text-gray-600 dark:text-gray-300">
-              Participant: <Badge variant="secondary" className="text-lg px-3 py-1 ml-2">{participantCode}</Badge>
+              Participant:{" "}
+              <Badge variant="secondary" className="text-lg px-3 py-1 ml-2">
+                {participantCode}
+              </Badge>
             </p>
             {participantLoading ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -214,7 +251,8 @@ export default function StationParticipantPage() {
               <CardHeader className="text-center">
                 <CardTitle>Select Your Station</CardTitle>
                 <CardDescription>
-                  Choose the station you are operating to enter scores for {participant ? participant.profiles.name : participantCode}
+                  Choose the station you are operating to enter scores for{" "}
+                  {participant ? participant.profiles.name : participantCode}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -223,7 +261,9 @@ export default function StationParticipantPage() {
                     <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mx-auto mb-2">
                       <div className="w-4 h-4 bg-primary-foreground rounded-full" />
                     </div>
-                    <div className="text-sm text-muted-foreground">Loading stations...</div>
+                    <div className="text-sm text-muted-foreground">
+                      Loading stations...
+                    </div>
                   </div>
                 ) : stationsError ? (
                   <div className="text-center py-8 text-red-500">
@@ -237,14 +277,23 @@ export default function StationParticipantPage() {
                         <Button
                           key={station.id}
                           variant="outline"
-                          onClick={() => handleStationSelect(station.station_type)}
+                          onClick={() =>
+                            handleStationSelect(
+                              (station.station_type as StationType) ??
+                                ("balance" as StationType)
+                            )
+                          }
                           className="h-auto p-6 flex flex-col items-center gap-4 hover:bg-muted/50"
                         >
-                          <div className={`p-4 rounded-full ${station.color_class} text-white`}>
+                          <div
+                            className={`p-4 rounded-full ${station.color_class} text-white`}
+                          >
                             <IconComponent className="h-8 w-8" />
                           </div>
                           <div className="text-center">
-                            <h3 className="font-semibold text-lg">{station.name}</h3>
+                            <h3 className="font-semibold text-lg">
+                              {station.name}
+                            </h3>
                             <p className="text-sm text-muted-foreground mt-1">
                               {station.description}
                             </p>
@@ -264,16 +313,23 @@ export default function StationParticipantPage() {
                 <div className="flex items-center gap-3">
                   {currentStation && (
                     <>
-                      <div className={`p-3 rounded-full ${currentStation.color_class} text-white`}>
+                      <div
+                        className={`p-3 rounded-full ${currentStation.color_class} text-white`}
+                      >
                         {(() => {
-                          const IconComponent = getIconByName(currentStation.icon_name);
+                          const IconComponent = getIconByName(
+                            currentStation.icon_name
+                          );
                           return <IconComponent className="h-6 w-6" />;
                         })()}
                       </div>
                       <div>
                         <CardTitle>{currentStation.name} Station</CardTitle>
                         <CardDescription>
-                          Enter measurements for {participant ? participant.profiles.name : participantCode}
+                          Enter measurements for{" "}
+                          {participant
+                            ? participant.profiles.name
+                            : participantCode}
                         </CardDescription>
                       </div>
                     </>
@@ -308,24 +364,39 @@ export default function StationParticipantPage() {
                           Existing Result Found
                         </CardTitle>
                         <CardDescription className="text-orange-700 dark:text-orange-300">
-                          A result has already been recorded for this participant and station.
+                          A result has already been recorded for this
+                          participant and station.
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="text-sm space-y-1">
-                          <p><span className="font-medium">Participant:</span> {existingResult.participantCode}</p>
-                          <p><span className="font-medium">Station:</span> {existingResult.stationType}</p>
-                          <p><span className="font-medium">Recorded:</span> {new Date(existingResult.recordedAt).toLocaleString()}</p>
+                          <p>
+                            <span className="font-medium">Participant:</span>{" "}
+                            {existingResult.participantCode}
+                          </p>
+                          <p>
+                            <span className="font-medium">Station:</span>{" "}
+                            {existingResult.stationType}
+                          </p>
+                          <p>
+                            <span className="font-medium">Recorded:</span>{" "}
+                            {new Date(
+                              existingResult.recordedAt
+                            ).toLocaleString()}
+                          </p>
                         </div>
 
                         {showDeleteConfirm ? (
                           <div className="space-y-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
                             <div className="flex items-center gap-2 text-red-800 dark:text-red-200">
                               <AlertTriangle className="h-5 w-5" />
-                              <span className="font-medium">Confirm Deletion</span>
+                              <span className="font-medium">
+                                Confirm Deletion
+                              </span>
                             </div>
                             <p className="text-sm text-red-700 dark:text-red-300">
-                              Are you sure you want to delete the existing result? This action cannot be undone.
+                              Are you sure you want to delete the existing
+                              result? This action cannot be undone.
                             </p>
                             <div className="flex gap-2">
                               <Button
@@ -359,7 +430,8 @@ export default function StationParticipantPage() {
                         ) : (
                           <div className="space-y-2">
                             <p className="text-sm text-orange-700 dark:text-orange-300">
-                              To enter new measurements, you must first delete the existing result.
+                              To enter new measurements, you must first delete
+                              the existing result.
                             </p>
                             <Button
                               variant="outline"
