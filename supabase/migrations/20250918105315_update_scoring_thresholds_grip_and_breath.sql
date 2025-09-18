@@ -16,7 +16,7 @@ CREATE TABLE public.scoring_thresholds (
 );
 
 -- Insert grip strength scoring thresholds
--- Above Average (3 points)  Excellent
+-- Above Average (3 points)  Excellent
 INSERT INTO public.scoring_thresholds (station_type, gender, min_age, max_age, score, min_value, max_value) VALUES
 -- Men
 ('grip', 'male', 18, 39, 3, 60, NULL),
@@ -27,7 +27,7 @@ INSERT INTO public.scoring_thresholds (station_type, gender, min_age, max_age, s
 ('grip', 'female', 40, 59, 3, 30, NULL),
 ('grip', 'female', 60, NULL, 3, 20, NULL),
 
--- Average (2 points)  Typical / acceptable
+-- Average (2 points)  Typical / acceptable
 -- Men
 ('grip', 'male', 18, 39, 2, 30, 59),
 ('grip', 'male', 40, 59, 2, 20, 44),
@@ -37,7 +37,7 @@ INSERT INTO public.scoring_thresholds (station_type, gender, min_age, max_age, s
 ('grip', 'female', 40, 59, 2, 15, 29),
 ('grip', 'female', 60, NULL, 2, 8, 19),
 
--- Bad (1 point)  Low / requires follow-up
+-- Bad (1 point)  Low / requires follow-up
 -- Men
 ('grip', 'male', 18, 39, 1, NULL, 29),
 ('grip', 'male', 40, 59, 1, NULL, 19),
@@ -45,7 +45,38 @@ INSERT INTO public.scoring_thresholds (station_type, gender, min_age, max_age, s
 -- Women
 ('grip', 'female', 18, 39, 1, NULL, 19),
 ('grip', 'female', 40, 59, 1, NULL, 14),
-('grip', 'female', 60, NULL, 1, NULL, 7);
+('grip', 'female', 60, NULL, 1, NULL, 7),
+
+-- Insert breath/balloon scoring thresholds
+-- Above Average (3 points)  Excellent
+-- Men
+('breath', 'male', 18, 39, 3, 33, NULL),
+('breath', 'male', 40, 59, 3, 30, NULL),
+('breath', 'male', 60, NULL, 3, 25, NULL),
+-- Women
+('breath', 'female', 18, 39, 3, 30, NULL),
+('breath', 'female', 40, 59, 3, 26, NULL),
+('breath', 'female', 60, NULL, 3, 20, NULL),
+
+-- Average (2 points)  Typical / acceptable
+-- Men
+('breath', 'male', 18, 39, 2, 25, 32),
+('breath', 'male', 40, 59, 2, 23, 29),
+('breath', 'male', 60, NULL, 2, 18, 24),
+-- Women
+('breath', 'female', 18, 39, 2, 23, 29),
+('breath', 'female', 40, 59, 2, 20, 25),
+('breath', 'female', 60, NULL, 2, 15, 19),
+
+-- Bad (1 point)  Low / requires follow-up
+-- Men
+('breath', 'male', 18, 39, 1, NULL, 24),
+('breath', 'male', 40, 59, 1, NULL, 22),
+('breath', 'male', 60, NULL, 1, NULL, 17),
+-- Women
+('breath', 'female', 18, 39, 1, NULL, 22),
+('breath', 'female', 40, 59, 1, NULL, 19),
+('breath', 'female', 60, NULL, 1, NULL, 14);
 
 -- Enable RLS (Row Level Security)
 ALTER TABLE public.scoring_thresholds ENABLE ROW LEVEL SECURITY;

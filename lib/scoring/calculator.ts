@@ -99,23 +99,25 @@ export async function getScoringThresholds(
   }
 
   // Filter thresholds that match the age range
-  return thresholds.filter(threshold => {
-    const minAge = threshold.min_age;
-    const maxAge = threshold.max_age;
+  return thresholds
+    .filter((threshold) => {
+      const minAge = threshold.min_age;
+      const maxAge = threshold.max_age;
 
-    // Age must be >= min_age
-    if (age < minAge) return false;
+      // Age must be >= min_age
+      if (age < minAge) return false;
 
-    // If max_age is null, it's an open range (60+)
-    // Otherwise, age must be <= max_age
-    if (maxAge !== null && age > maxAge) return false;
+      // If max_age is null, it's an open range (60+)
+      // Otherwise, age must be <= max_age
+      if (maxAge !== null && age > maxAge) return false;
 
-    return true;
-  }).map(t => ({
-    min_value: t.min_value,
-    max_value: t.max_value,
-    score: t.score
-  }));
+      return true;
+    })
+    .map((t) => ({
+      min_value: t.min_value,
+      max_value: t.max_value,
+      score: t.score,
+    }));
 }
 
 /**
@@ -164,13 +166,12 @@ export function extractMeasurementValue(
         metricName: "balloon_diameter_cm",
       };
 
-    case "grip_strength":
+    case "grip":
       const gripMeasurement = measurements as GripMeasurement;
       return {
         value: gripMeasurement.grip_seconds,
         metricName: "grip_seconds",
       };
-
 
     default:
       return null;

@@ -3,12 +3,24 @@
 import React, { useState } from "react";
 import { AuthenticatedLayout } from "@/components/layout/authenticated-layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
@@ -17,7 +29,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -25,7 +37,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import { Settings, Plus, Edit, Trash2, Filter, RefreshCw } from "lucide-react";
 import { useAuthContext } from "@/components/providers/auth-provider";
@@ -33,12 +45,16 @@ import {
   useScoringThresholds,
   useCreateScoringThreshold,
   useUpdateScoringThreshold,
-  useDeleteScoringThreshold
+  useDeleteScoringThreshold,
 } from "@/lib/hooks/useScoringThresholds";
 import { useRouter } from "next/navigation";
-import type { ScoringThreshold, StationType, Gender } from "@/lib/types/database";
+import type {
+  ScoringThreshold,
+  StationType,
+  Gender,
+} from "@/lib/types/database";
 
-const STATION_TYPES: StationType[] = ["balance", "breath", "grip_strength"];
+const STATION_TYPES: StationType[] = ["balance", "breath", "grip"];
 const GENDERS: Gender[] = ["male", "female"];
 
 interface ThresholdFormData {
@@ -64,7 +80,8 @@ export default function AdminScoringThresholdsPage() {
 
   // Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingThreshold, setEditingThreshold] = useState<ScoringThreshold | null>(null);
+  const [editingThreshold, setEditingThreshold] =
+    useState<ScoringThreshold | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Form state
@@ -75,29 +92,38 @@ export default function AdminScoringThresholdsPage() {
     max_age: 39,
     score: 1,
     min_value: null,
-    max_value: null
+    max_value: null,
   });
 
   // Hooks
-  const { data: thresholds, isLoading, error, refetch } = useScoringThresholds(filters);
+  const {
+    data: thresholds,
+    isLoading,
+    error,
+    refetch,
+  } = useScoringThresholds(filters);
   const createThreshold = useCreateScoringThreshold();
   const updateThreshold = useUpdateScoringThreshold();
   const deleteThreshold = useDeleteScoringThreshold();
 
   // Check admin access
   React.useEffect(() => {
-    if (profile && profile.role !== 'admin') {
-      router.push('/participate');
+    if (profile && profile.role !== "admin") {
+      router.push("/participate");
     }
   }, [profile, router]);
 
-  if (!profile || profile.role !== 'admin') {
+  if (!profile || profile.role !== "admin") {
     return (
-      <AuthenticatedLayout title="Access Denied" subtitle="Admin access required">
+      <AuthenticatedLayout
+        title="Access Denied"
+        subtitle="Admin access required"
+      >
         <div className="container mx-auto px-4 py-8">
           <Alert variant="destructive">
             <AlertDescription>
-              You don't have permission to access this page. Admin role required.
+              You don't have permission to access this page. Admin role
+              required.
             </AlertDescription>
           </Alert>
         </div>
@@ -112,7 +138,7 @@ export default function AdminScoringThresholdsPage() {
       setIsCreateModalOpen(false);
       resetForm();
     } catch (error) {
-      console.error('Error creating threshold:', error);
+      console.error("Error creating threshold:", error);
     }
   };
 
@@ -123,23 +149,24 @@ export default function AdminScoringThresholdsPage() {
     try {
       await updateThreshold.mutateAsync({
         ...formData,
-        id: editingThreshold.id
+        id: editingThreshold.id,
       });
       setIsEditModalOpen(false);
       setEditingThreshold(null);
       resetForm();
     } catch (error) {
-      console.error('Error updating threshold:', error);
+      console.error("Error updating threshold:", error);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this scoring threshold?')) return;
+    if (!confirm("Are you sure you want to delete this scoring threshold?"))
+      return;
 
     try {
       await deleteThreshold.mutateAsync(id);
     } catch (error) {
-      console.error('Error deleting threshold:', error);
+      console.error("Error deleting threshold:", error);
     }
   };
 
@@ -152,7 +179,7 @@ export default function AdminScoringThresholdsPage() {
       max_age: threshold.max_age,
       score: threshold.score,
       min_value: threshold.min_value,
-      max_value: threshold.max_value
+      max_value: threshold.max_value,
     });
     setIsEditModalOpen(true);
   };
@@ -165,7 +192,7 @@ export default function AdminScoringThresholdsPage() {
       max_age: 39,
       score: 1,
       min_value: null,
-      max_value: null
+      max_value: null,
     });
   };
 
@@ -174,15 +201,19 @@ export default function AdminScoringThresholdsPage() {
   };
 
   const formatStationType = (type: string) => {
-    return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   const getScoreLabel = (score: number) => {
-    switch(score) {
-      case 3: return "Excellent";
-      case 2: return "Average";
-      case 1: return "Low";
-      default: return `Score ${score}`;
+    switch (score) {
+      case 3:
+        return "Excellent";
+      case 2:
+        return "Average";
+      case 1:
+        return "Low";
+      default:
+        return `Score ${score}`;
     }
   };
 
@@ -193,7 +224,10 @@ export default function AdminScoringThresholdsPage() {
     return `${minAge}-${maxAge}`;
   };
 
-  const getValueRangeDisplay = (minValue: number | null, maxValue: number | null) => {
+  const getValueRangeDisplay = (
+    minValue: number | null,
+    maxValue: number | null
+  ) => {
     if (minValue === null && maxValue === null) {
       return "Any";
     }
@@ -233,11 +267,16 @@ export default function AdminScoringThresholdsPage() {
               onClick={() => refetch()}
               disabled={isLoading}
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+              />
               Refresh
             </Button>
 
-            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+            <Dialog
+              open={isCreateModalOpen}
+              onOpenChange={setIsCreateModalOpen}
+            >
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
@@ -248,7 +287,8 @@ export default function AdminScoringThresholdsPage() {
                 <DialogHeader>
                   <DialogTitle>Create Scoring Threshold</DialogTitle>
                   <DialogDescription>
-                    Add a new scoring threshold for a specific demographic and station.
+                    Add a new scoring threshold for a specific demographic and
+                    station.
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleCreateSubmit}>
@@ -259,9 +299,9 @@ export default function AdminScoringThresholdsPage() {
                         <Select
                           value={formData.station_type}
                           onValueChange={(value: StationType) => {
-                            setFormData(prev => ({
+                            setFormData((prev) => ({
                               ...prev,
-                              station_type: value
+                              station_type: value,
                             }));
                           }}
                         >
@@ -269,7 +309,7 @@ export default function AdminScoringThresholdsPage() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {STATION_TYPES.map(type => (
+                            {STATION_TYPES.map((type) => (
                               <SelectItem key={type} value={type}>
                                 {formatStationType(type)}
                               </SelectItem>
@@ -283,16 +323,17 @@ export default function AdminScoringThresholdsPage() {
                         <Select
                           value={formData.gender}
                           onValueChange={(value: Gender) => {
-                            setFormData(prev => ({ ...prev, gender: value }));
+                            setFormData((prev) => ({ ...prev, gender: value }));
                           }}
                         >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {GENDERS.map(gender => (
+                            {GENDERS.map((gender) => (
                               <SelectItem key={gender} value={gender}>
-                                {gender.charAt(0).toUpperCase() + gender.slice(1)}
+                                {gender.charAt(0).toUpperCase() +
+                                  gender.slice(1)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -308,10 +349,12 @@ export default function AdminScoringThresholdsPage() {
                           type="number"
                           min="0"
                           value={formData.min_age}
-                          onChange={(e) => setFormData(prev => ({
-                            ...prev,
-                            min_age: parseInt(e.target.value) || 0
-                          }))}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              min_age: parseInt(e.target.value) || 0,
+                            }))
+                          }
                           required
                         />
                       </div>
@@ -323,10 +366,14 @@ export default function AdminScoringThresholdsPage() {
                           type="number"
                           min="0"
                           value={formData.max_age || ""}
-                          onChange={(e) => setFormData(prev => ({
-                            ...prev,
-                            max_age: e.target.value ? parseInt(e.target.value) : null
-                          }))}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              max_age: e.target.value
+                                ? parseInt(e.target.value)
+                                : null,
+                            }))
+                          }
                           placeholder="No limit"
                         />
                       </div>
@@ -336,7 +383,10 @@ export default function AdminScoringThresholdsPage() {
                         <Select
                           value={formData.score.toString()}
                           onValueChange={(value) => {
-                            setFormData(prev => ({ ...prev, score: parseInt(value) }));
+                            setFormData((prev) => ({
+                              ...prev,
+                              score: parseInt(value),
+                            }));
                           }}
                         >
                           <SelectTrigger>
@@ -359,10 +409,14 @@ export default function AdminScoringThresholdsPage() {
                           type="number"
                           step="0.1"
                           value={formData.min_value || ""}
-                          onChange={(e) => setFormData(prev => ({
-                            ...prev,
-                            min_value: e.target.value ? parseFloat(e.target.value) : null
-                          }))}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              min_value: e.target.value
+                                ? parseFloat(e.target.value)
+                                : null,
+                            }))
+                          }
                           placeholder="No minimum"
                         />
                       </div>
@@ -374,10 +428,14 @@ export default function AdminScoringThresholdsPage() {
                           type="number"
                           step="0.1"
                           value={formData.max_value || ""}
-                          onChange={(e) => setFormData(prev => ({
-                            ...prev,
-                            max_value: e.target.value ? parseFloat(e.target.value) : null
-                          }))}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              max_value: e.target.value
+                                ? parseFloat(e.target.value)
+                                : null,
+                            }))
+                          }
                           placeholder="No maximum"
                         />
                       </div>
@@ -392,11 +450,8 @@ export default function AdminScoringThresholdsPage() {
                     >
                       Cancel
                     </Button>
-                    <Button
-                      type="submit"
-                      disabled={createThreshold.isPending}
-                    >
-                      {createThreshold.isPending ? 'Creating...' : 'Create'}
+                    <Button type="submit" disabled={createThreshold.isPending}>
+                      {createThreshold.isPending ? "Creating..." : "Create"}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -413,7 +468,8 @@ export default function AdminScoringThresholdsPage() {
               Filters
             </CardTitle>
             <CardDescription>
-              Filter scoring thresholds by station type, gender, and age. Enter an age to see all thresholds that apply to someone of that age.
+              Filter scoring thresholds by station type, gender, and age. Enter
+              an age to see all thresholds that apply to someone of that age.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -422,17 +478,20 @@ export default function AdminScoringThresholdsPage() {
                 <Label>Station Type</Label>
                 <Select
                   value={filters.station_type || "all"}
-                  onValueChange={(value) => setFilters(prev => ({
-                    ...prev,
-                    station_type: value === "all" ? undefined : (value as StationType)
-                  }))}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      station_type:
+                        value === "all" ? undefined : (value as StationType),
+                    }))
+                  }
                 >
                   <SelectTrigger className="w-40">
                     <SelectValue placeholder="All stations" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All stations</SelectItem>
-                    {STATION_TYPES.map(type => (
+                    {STATION_TYPES.map((type) => (
                       <SelectItem key={type} value={type}>
                         {formatStationType(type)}
                       </SelectItem>
@@ -445,17 +504,19 @@ export default function AdminScoringThresholdsPage() {
                 <Label>Gender</Label>
                 <Select
                   value={filters.gender || "all"}
-                  onValueChange={(value) => setFilters(prev => ({
-                    ...prev,
-                    gender: value === "all" ? undefined : (value as Gender)
-                  }))}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      gender: value === "all" ? undefined : (value as Gender),
+                    }))
+                  }
                 >
                   <SelectTrigger className="w-32">
                     <SelectValue placeholder="All genders" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All genders</SelectItem>
-                    {GENDERS.map(gender => (
+                    {GENDERS.map((gender) => (
                       <SelectItem key={gender} value={gender}>
                         {gender.charAt(0).toUpperCase() + gender.slice(1)}
                       </SelectItem>
@@ -472,10 +533,14 @@ export default function AdminScoringThresholdsPage() {
                   className="w-32"
                   min="0"
                   value={filters.age || ""}
-                  onChange={(e) => setFilters(prev => ({
-                    ...prev,
-                    age: e.target.value ? parseInt(e.target.value) : undefined
-                  }))}
+                  onChange={(e) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      age: e.target.value
+                        ? parseInt(e.target.value)
+                        : undefined,
+                    }))
+                  }
                   title="Show all thresholds that apply to this age"
                 />
               </div>
@@ -492,21 +557,25 @@ export default function AdminScoringThresholdsPage() {
           <CardHeader>
             <CardTitle>Scoring Thresholds</CardTitle>
             <CardDescription>
-              {thresholds?.length || 0} threshold{thresholds?.length !== 1 ? 's' : ''} configured
+              {thresholds?.length || 0} threshold
+              {thresholds?.length !== 1 ? "s" : ""} configured
             </CardDescription>
           </CardHeader>
           <CardContent>
             {error && (
               <Alert variant="destructive" className="mb-4">
                 <AlertDescription>
-                  Failed to load scoring thresholds. Please try refreshing the page.
+                  Failed to load scoring thresholds. Please try refreshing the
+                  page.
                 </AlertDescription>
               </Alert>
             )}
 
             {isLoading ? (
               <div className="text-center py-8">
-                <div className="text-sm text-muted-foreground">Loading scoring thresholds...</div>
+                <div className="text-sm text-muted-foreground">
+                  Loading scoring thresholds...
+                </div>
               </div>
             ) : thresholds && thresholds.length > 0 ? (
               <div className="overflow-x-auto">
@@ -530,16 +599,31 @@ export default function AdminScoringThresholdsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {threshold.gender.charAt(0).toUpperCase() + threshold.gender.slice(1)}
+                          {threshold.gender.charAt(0).toUpperCase() +
+                            threshold.gender.slice(1)}
                         </TableCell>
                         <TableCell>
-                          {getAgeRangeDisplay(threshold.min_age, threshold.max_age)}
+                          {getAgeRangeDisplay(
+                            threshold.min_age,
+                            threshold.max_age
+                          )}
                         </TableCell>
                         <TableCell>
-                          {getValueRangeDisplay(threshold.min_value, threshold.max_value)}
+                          {getValueRangeDisplay(
+                            threshold.min_value,
+                            threshold.max_value
+                          )}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={threshold.score === 3 ? "default" : threshold.score === 2 ? "secondary" : "destructive"}>
+                          <Badge
+                            variant={
+                              threshold.score === 3
+                                ? "default"
+                                : threshold.score === 2
+                                ? "secondary"
+                                : "destructive"
+                            }
+                          >
                             {getScoreLabel(threshold.score)}
                           </Badge>
                         </TableCell>
@@ -598,7 +682,8 @@ export default function AdminScoringThresholdsPage() {
                   <div>
                     <Label>Gender</Label>
                     <div className="p-2 bg-muted rounded text-sm">
-                      {formData.gender.charAt(0).toUpperCase() + formData.gender.slice(1)}
+                      {formData.gender.charAt(0).toUpperCase() +
+                        formData.gender.slice(1)}
                     </div>
                   </div>
                 </div>
@@ -611,10 +696,12 @@ export default function AdminScoringThresholdsPage() {
                       type="number"
                       min="0"
                       value={formData.min_age}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        min_age: parseInt(e.target.value) || 0
-                      }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          min_age: parseInt(e.target.value) || 0,
+                        }))
+                      }
                       required
                     />
                   </div>
@@ -626,10 +713,14 @@ export default function AdminScoringThresholdsPage() {
                       type="number"
                       min="0"
                       value={formData.max_age || ""}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        max_age: e.target.value ? parseInt(e.target.value) : null
-                      }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          max_age: e.target.value
+                            ? parseInt(e.target.value)
+                            : null,
+                        }))
+                      }
                       placeholder="No limit"
                     />
                   </div>
@@ -639,7 +730,10 @@ export default function AdminScoringThresholdsPage() {
                     <Select
                       value={formData.score.toString()}
                       onValueChange={(value) => {
-                        setFormData(prev => ({ ...prev, score: parseInt(value) }));
+                        setFormData((prev) => ({
+                          ...prev,
+                          score: parseInt(value),
+                        }));
                       }}
                     >
                       <SelectTrigger>
@@ -662,10 +756,14 @@ export default function AdminScoringThresholdsPage() {
                       type="number"
                       step="0.1"
                       value={formData.min_value || ""}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        min_value: e.target.value ? parseFloat(e.target.value) : null
-                      }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          min_value: e.target.value
+                            ? parseFloat(e.target.value)
+                            : null,
+                        }))
+                      }
                       placeholder="No minimum"
                     />
                   </div>
@@ -677,10 +775,14 @@ export default function AdminScoringThresholdsPage() {
                       type="number"
                       step="0.1"
                       value={formData.max_value || ""}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        max_value: e.target.value ? parseFloat(e.target.value) : null
-                      }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          max_value: e.target.value
+                            ? parseFloat(e.target.value)
+                            : null,
+                        }))
+                      }
                       placeholder="No maximum"
                     />
                   </div>
@@ -699,11 +801,8 @@ export default function AdminScoringThresholdsPage() {
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={updateThreshold.isPending}
-                >
-                  {updateThreshold.isPending ? 'Updating...' : 'Update'}
+                <Button type="submit" disabled={updateThreshold.isPending}>
+                  {updateThreshold.isPending ? "Updating..." : "Update"}
                 </Button>
               </DialogFooter>
             </form>
