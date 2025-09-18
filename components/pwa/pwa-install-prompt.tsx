@@ -19,6 +19,15 @@ export function PWAInstallPrompt({
   onInstall,
   onDismiss,
 }: PWAInstallPromptProps) {
+  const handleDismiss = () => {
+    // Set timestamp for 10 minutes from now
+    const tenMinutesFromNow = Date.now() + 10 * 60 * 1000;
+    localStorage.setItem(
+      "pwa-prompt-dismissed-until",
+      tenMinutesFromNow.toString()
+    );
+    onDismiss();
+  };
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:w-80">
       <Card className="bg-card border-border shadow-lg">
@@ -30,7 +39,7 @@ export function PWAInstallPrompt({
               </div>
               <div>
                 <CardTitle className="text-sm text-card-foreground">
-                  Install The Longevity Fitness Games.
+                  Install The Longevity Game.
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground">
                   Get the full app experience
@@ -40,7 +49,7 @@ export function PWAInstallPrompt({
             <Button
               variant="ghost"
               size="sm"
-              onClick={onDismiss}
+              onClick={handleDismiss}
               className="h-6 w-6 p-0 text-muted-foreground hover:text-card-foreground"
             >
               <X className="h-4 w-4" />
@@ -62,7 +71,7 @@ export function PWAInstallPrompt({
               Install
             </Button>
             <Button
-              onClick={onDismiss}
+              onClick={handleDismiss}
               variant="outline"
               size="sm"
               className="flex-1 bg-transparent"

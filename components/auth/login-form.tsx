@@ -81,7 +81,7 @@ export function LoginForm({ onSuccess, className }: LoginFormProps) {
           Welcome Back
         </h2>
         <p className="text-muted-foreground">
-          Sign in to your Longevity Fitness Games account
+          Sign in to your Longevity Game account
         </p>
       </div>
 

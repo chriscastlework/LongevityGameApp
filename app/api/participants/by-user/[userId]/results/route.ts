@@ -90,7 +90,7 @@ export async function GET(
         stationName: station?.name || 'Unknown Station',
         stationDescription: station?.description || '',
         measurements: result.measurements,
-        score: result.score, // Use stored score from database
+        score: result.score || 0, // Use stored score from database, default to 0 if null
         maxScore: maxScore,
         completedAt: result.created_at
       };
@@ -101,7 +101,7 @@ export async function GET(
     const completedStations = resultsWithScores.map(r => r.stationType);
     const remainingStations = allStations.filter(station => !completedStations.includes(station));
 
-    const totalScore = resultsWithScores.reduce((sum, result) => sum + result.score, 0);
+    const totalScore = resultsWithScores.reduce((sum, result) => sum + (result.score || 0), 0);
     const maxPossibleScore = completedStations.length * 3;
     const grade = maxPossibleScore > 0 ? calculateGrade(totalScore, completedStations.length) : null;
 

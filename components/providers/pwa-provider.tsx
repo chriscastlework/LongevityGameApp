@@ -26,10 +26,29 @@ export function PWAProvider({ children }: PWAProviderProps) {
         });
     }
 
+    // Periodic check to re-show prompt after dismiss period expires
+    const checkDismissedPrompt = () => {
+      const dismissedUntil = localStorage.getItem('pwa-prompt-dismissed-until');
+      if (dismissedUntil && Date.now() >= parseInt(dismissedUntil) && deferredPrompt && !showInstallPrompt) {
+        localStorage.removeItem('pwa-prompt-dismissed-until');
+        setShowInstallPrompt(true);
+      }
+    };
+
+    const intervalId = setInterval(checkDismissedPrompt, 30000); // Check every 30 seconds
+
     // Handle PWA install prompt
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
+
+      // Check if user recently dismissed the prompt
+      const dismissedUntil = localStorage.getItem('pwa-prompt-dismissed-until');
+      if (dismissedUntil && Date.now() < parseInt(dismissedUntil)) {
+        // Still within the 10-minute wait period
+        return;
+      }
+
       setShowInstallPrompt(true);
     };
 
@@ -45,13 +64,14 @@ export function PWAProvider({ children }: PWAProviderProps) {
     window.addEventListener("appinstalled", handleAppInstalled);
 
     return () => {
+      clearInterval(intervalId);
       window.removeEventListener(
         "beforeinstallprompt",
         handleBeforeInstallPrompt
       );
       window.removeEventListener("appinstalled", handleAppInstalled);
     };
-  }, []);
+  }, [deferredPrompt, showInstallPrompt]);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;

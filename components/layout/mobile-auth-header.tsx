@@ -45,7 +45,7 @@ interface MobileAuthHeaderProps {
 }
 
 export function MobileAuthHeader({
-  title = "Longevity Fitness Games",
+  title = "Longevity Game",
   subtitle,
 }: MobileAuthHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -95,7 +95,7 @@ export function MobileAuthHeader({
           <nav className="hidden lg:flex items-center gap-6">
             {navigationItems.map((item) => {
               // Only show admin items if user is admin
-              if (item.adminOnly && profile?.role !== 'admin') {
+              if (item.adminOnly && profile?.role !== "admin") {
                 return null;
               }
 
@@ -172,7 +172,7 @@ export function MobileAuthHeader({
               <nav className="mt-6 space-y-1">
                 {navigationItems.map((item) => {
                   // Only show admin items if user is admin
-                  if (item.adminOnly && profile?.role !== 'admin') {
+                  if (item.adminOnly && profile?.role !== "admin") {
                     return null;
                   }
 
@@ -207,20 +207,6 @@ export function MobileAuthHeader({
 
               {/* Settings and Logout */}
               <div className="mt-8 pt-6 border-t border-border space-y-2">
-                <Link
-                  href="/settings"
-                  onClick={() => setIsOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all hover:bg-accent",
-                    pathname === "/settings"
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <Settings className="w-5 h-5" />
-                  <span>Settings</span>
-                </Link>
-
                 <div className="px-3">
                   <LogoutButton
                     variant="ghost"
@@ -235,7 +221,7 @@ export function MobileAuthHeader({
               {/* Footer */}
               <div className="mt-8 pt-6 border-t border-border text-center">
                 <p className="text-xs text-muted-foreground">
-                  © 2025 Longevity Fitness Games
+                  © 2025 Longevity Game
                 </p>
               </div>
             </SheetContent>

@@ -14,9 +14,9 @@ interface AuthenticatedLayoutProps {
 
 export function AuthenticatedLayout({
   children,
-  title = "Longevity Fitness Games",
+  title = "Longevity Game",
   subtitle,
-  className = "min-h-screen bg-background"
+  className = "min-h-screen bg-background",
 }: AuthenticatedLayoutProps) {
   const { isLoading, isAuthenticated } = useAuthContext();
 
@@ -34,8 +34,8 @@ export function AuthenticatedLayout({
 
   // Redirect if not authenticated (this should be handled by middleware, but just in case)
   if (!isAuthenticated) {
-    if (typeof window !== 'undefined') {
-      window.location.href = '/auth/login';
+    if (typeof window !== "undefined") {
+      window.location.href = "/auth/login";
     }
     return null;
   }

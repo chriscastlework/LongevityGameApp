@@ -83,61 +83,6 @@ export type Database = {
         }
         Relationships: []
       }
-      results: {
-        Row: {
-          created_at: string | null
-          id: string
-          notes: string | null
-          operator_id: string
-          participant_id: string
-          recorded_at: string | null
-          score: number
-          station_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          operator_id: string
-          participant_id: string
-          recorded_at?: string | null
-          score: number
-          station_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          operator_id?: string
-          participant_id?: string
-          recorded_at?: string | null
-          score?: number
-          station_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "results_operator_id_fkey"
-            columns: ["operator_id"]
-            isOneToOne: false
-            referencedRelation: "station_operators"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "results_participant_id_fkey"
-            columns: ["participant_id"]
-            isOneToOne: false
-            referencedRelation: "participants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "results_station_id_fkey"
-            columns: ["station_id"]
-            isOneToOne: false
-            referencedRelation: "stations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       scoring_thresholds: {
         Row: {
           created_at: string | null

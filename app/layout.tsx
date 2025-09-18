@@ -7,7 +7,7 @@ import "./globals.css";
 import { ClientProviders } from "@/components/providers/client-providers";
 
 export const metadata: Metadata = {
-  title: "Longevity Game App",
+  title: "Longevity Game",
   description:
     "Join competitions, track your progress, and compete with others in our modern PWA platform.",
   generator: "v0.app",
@@ -26,17 +26,17 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "Longevity Game App",
+    title: "Longevity Game",
     description:
       "Join competitions, track your progress, and compete with others in our modern PWA platform.",
     url: "https://longevitygame.app",
-    siteName: "Longevity Game App",
+    siteName: "Longevity Game",
     images: [
       {
         url: "/icons/icon-512x512.jpg",
         width: 512,
         height: 512,
-        alt: "Anywhere Competition App",
+        alt: "Longevity Game",
       },
     ],
     locale: "en_US",
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Longevity Game App",
+    title: "Longevity Game",
     description:
       "Join competitions, track your progress, and compete with others in our modern PWA platform.",
     images: ["/icons/icon-512x512.jpg"],

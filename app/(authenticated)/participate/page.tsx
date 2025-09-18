@@ -119,18 +119,18 @@ function ParticipatePageContent() {
   return (
     <AuthenticatedLayout
       title="Participate"
-      subtitle="Join the fitness assessment"
+      subtitle="Join the Longevity Games"
       className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800"
     >
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Welcome to the Longevity Fitness Games
+            Welcome to the Longevity Game
           </h1>
           <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300">
             {isEmailConfirmed
-              ? "You're ready to begin your fitness assessment!"
+              ? "You're ready to begin your Longevity Games!"
               : "Please confirm your email to access your QR code"}
           </p>
         </div>
@@ -294,8 +294,9 @@ function ParticipatePageContent() {
                         <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                           <Target className="h-8 w-8 text-blue-600 mx-auto mb-2" />
                           <p className="text-2xl font-bold text-blue-600">
-                            {participantResults?.progress.completedStations || 0}/
-                            {participantResults?.progress.totalStations || 4}
+                            {participantResults?.progress.completedStations ||
+                              0}
+                            /{participantResults?.progress.totalStations || 4}
                           </p>
                           <p className="text-sm text-muted-foreground">
                             Stations Complete
@@ -306,10 +307,10 @@ function ParticipatePageContent() {
                           <TrendingUp className="h-8 w-8 text-green-600 mx-auto mb-2" />
                           <p className="text-2xl font-bold text-green-600">
                             {participantResults?.progress.totalScore || 0}
-                            {(participantResults?.progress.maxPossibleScore || 0) >
-                              0 && (
+                            {(participantResults?.progress.maxPossibleScore ||
+                              0) > 0 && (
                               <span className="text-sm text-muted-foreground">
-                                /{participantResults.progress.maxPossibleScore}
+                                /{participantResults?.progress.maxPossibleScore}
                               </span>
                             )}
                           </p>
@@ -395,7 +396,9 @@ function ParticipatePageContent() {
                       )}
 
                       {/* Remaining Stations */}
-                      {((participantResults?.progress.remainingStations.length || 4) > 0 || !participantResults) && (
+                      {((participantResults?.progress.remainingStations
+                        .length || 4) > 0 ||
+                        !participantResults) && (
                         <>
                           <Separator />
                           <div>
@@ -403,39 +406,45 @@ function ParticipatePageContent() {
                               Remaining Stations
                             </h4>
                             <div className="grid gap-3">
-                              {(participantResults?.progress.remainingStations || ['balance', 'breath', 'grip', 'health']).map(
-                                (stationType) => {
-                                  const station = stations?.find(
-                                    (s) => s.station_type === stationType
-                                  );
-                                  const IconComponent =
-                                    station && station.icon_name
-                                      ? getIconByName(station.icon_name)
-                                      : Target;
+                              {(
+                                participantResults?.progress
+                                  .remainingStations || [
+                                  "balance",
+                                  "breath",
+                                  "grip",
+                                  "health",
+                                ]
+                              ).map((stationType) => {
+                                const station = stations?.find(
+                                  (s) => s.station_type === stationType
+                                );
+                                const IconComponent =
+                                  station && station.icon_name
+                                    ? getIconByName(station.icon_name)
+                                    : Target;
 
-                                  return station ? (
+                                return station ? (
+                                  <div
+                                    key={station.id}
+                                    className="flex items-center gap-4 p-3 border rounded-lg border-dashed opacity-60"
+                                  >
                                     <div
-                                      key={station.id}
-                                      className="flex items-center gap-4 p-3 border rounded-lg border-dashed opacity-60"
+                                      className={`p-2 rounded-full ${station.color_class} text-white opacity-75`}
                                     >
-                                      <div
-                                        className={`p-2 rounded-full ${station.color_class} text-white opacity-75`}
-                                      >
-                                        <IconComponent className="h-5 w-5" />
-                                      </div>
-                                      <div className="flex-1">
-                                        <h5 className="font-medium">
-                                          {station.name}
-                                        </h5>
-                                        <p className="text-sm text-muted-foreground">
-                                          {station.description}
-                                        </p>
-                                      </div>
-                                      <Badge variant="outline">Pending</Badge>
+                                      <IconComponent className="h-5 w-5" />
                                     </div>
-                                  ) : null;
-                                }
-                              )}
+                                    <div className="flex-1">
+                                      <h5 className="font-medium">
+                                        {station.name}
+                                      </h5>
+                                      <p className="text-sm text-muted-foreground">
+                                        {station.description}
+                                      </p>
+                                    </div>
+                                    <Badge variant="outline">Pending</Badge>
+                                  </div>
+                                ) : null;
+                              })}
                             </div>
                           </div>
                         </>
