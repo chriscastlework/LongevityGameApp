@@ -1,13 +1,13 @@
 {
-  "name": "Anywhere Competition App",
+  "name": "Longevity Game",
   "short_name": "Anywhere",
-  "description": "Join competitions, track your progress, and compete with others in our modern PWA platform.",
+  "description": "Join the Longevity Game, track your progress, and compete with others in our modern PWA platform.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1e293b",
   "theme_color": "#3b82f6",
   "orientation": "portrait-primary",
-  "categories": ["games", "sports", "productivity"],
+  "categories": ["games", "sports", "productivity", "longevity"],
   "lang": "en",
   "dir": "ltr",
   "icons": [
@@ -62,9 +62,9 @@
   ],
   "shortcuts": [
     {
-      "name": "Competitions",
-      "short_name": "Competitions",
-      "description": "View all competitions",
+      "name": "Longevity Game",
+      "short_name": "Longevity Game",
+      "description": "Longevity Game App join the game",
       "url": "/competitions",
       "icons": [
         {
@@ -74,9 +74,9 @@
       ]
     },
     {
-      "name": "Profile",
-      "short_name": "Profile",
-      "description": "View your profile",
+      "name": "Longevity Game",
+      "short_name": "Longevity Game",
+      "description": "Longevity Game App view your profile",
       "url": "/profile",
       "icons": [
         {

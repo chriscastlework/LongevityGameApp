@@ -119,7 +119,7 @@ function ParticipatePageContent() {
   return (
     <AuthenticatedLayout
       title="Participate"
-      subtitle="Join the Longevity Games"
+      subtitle="Join the Longevity Game"
       className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800"
     >
       <div className="container mx-auto px-4 py-8">
@@ -130,7 +130,7 @@ function ParticipatePageContent() {
           </h1>
           <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300">
             {isEmailConfirmed
-              ? "You're ready to begin your Longevity Games!"
+              ? "You're ready to begin your Longevity Game!"
               : "Please confirm your email to access your QR code"}
           </p>
         </div>

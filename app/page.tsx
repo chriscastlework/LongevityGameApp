@@ -18,7 +18,7 @@ export default function HomePage() {
       <div className="relative z-10 text-center space-y-8">
         <div className="space-y-4">
           <h1 className="text-5xl font-bold text-foreground">
-            Welcome to the longivity games
+            Welcome to the longevity game
             <span className="text-primary">.</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">

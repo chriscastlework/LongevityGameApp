@@ -99,7 +99,7 @@ export default function LeaderboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-              Fitness Games Leaderboard
+              Longevity Game Leaderboard
             </h1>
             <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300">
               Live results and rankings
