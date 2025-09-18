@@ -36,27 +36,19 @@ import {
   useDeleteScoringThreshold
 } from "@/lib/hooks/useScoringThresholds";
 import { useRouter } from "next/navigation";
-import type { ScoringThreshold, StationType, AgeGroup, Gender, MetricName } from "@/lib/types/database";
+import type { ScoringThreshold, StationType, Gender } from "@/lib/types/database";
 
-const STATION_TYPES: StationType[] = ["balance", "breath", "grip"];
+const STATION_TYPES: StationType[] = ["balance", "breath", "grip_strength"];
 const GENDERS: Gender[] = ["male", "female"];
-const AGE_GROUPS: AgeGroup[] = ["18-25", "26-35", "36-45", "46-55", "56-65", "65+"];
-
-const METRIC_NAMES: Record<StationType, MetricName[]> = {
-  balance: ["balance_seconds"],
-  breath: ["balloon_diameter_cm"],
-  grip: ["grip_seconds"]
-};
 
 interface ThresholdFormData {
   station_type: StationType;
-  metric_name: MetricName;
   gender: Gender;
-  age_group: AgeGroup;
-  average_score_min: number;
-  average_score_max: number;
-  description: string;
-  is_active: boolean;
+  min_age: number;
+  max_age: number | null;
+  score: number;
+  min_value: number | null;
+  max_value: number | null;
 }
 
 export default function AdminScoringThresholdsPage() {
@@ -67,7 +59,7 @@ export default function AdminScoringThresholdsPage() {
   const [filters, setFilters] = useState<{
     station_type?: StationType;
     gender?: Gender;
-    age_group?: AgeGroup;
+    age?: number;
   }>({});
 
   // Modal state
@@ -78,13 +70,12 @@ export default function AdminScoringThresholdsPage() {
   // Form state
   const [formData, setFormData] = useState<ThresholdFormData>({
     station_type: "balance",
-    metric_name: "balance_seconds",
     gender: "male",
-    age_group: "18-25",
-    average_score_min: 0,
-    average_score_max: 0,
-    description: "",
-    is_active: true
+    min_age: 18,
+    max_age: 39,
+    score: 1,
+    min_value: null,
+    max_value: null
   });
 
   // Hooks
@@ -156,13 +147,12 @@ export default function AdminScoringThresholdsPage() {
     setEditingThreshold(threshold);
     setFormData({
       station_type: threshold.station_type as StationType,
-      metric_name: threshold.metric_name as MetricName,
       gender: threshold.gender as Gender,
-      age_group: threshold.age_group as AgeGroup,
-      average_score_min: threshold.average_score_min || 0,
-      average_score_max: threshold.average_score_max || 0,
-      description: threshold.description || "",
-      is_active: threshold.is_active
+      min_age: threshold.min_age,
+      max_age: threshold.max_age,
+      score: threshold.score,
+      min_value: threshold.min_value,
+      max_value: threshold.max_value
     });
     setIsEditModalOpen(true);
   };
@@ -170,13 +160,12 @@ export default function AdminScoringThresholdsPage() {
   const resetForm = () => {
     setFormData({
       station_type: "balance",
-      metric_name: "balance_seconds",
       gender: "male",
-      age_group: "18-25",
-      average_score_min: 0,
-      average_score_max: 0,
-      description: "",
-      is_active: true
+      min_age: 18,
+      max_age: 39,
+      score: 1,
+      min_value: null,
+      max_value: null
     });
   };
 
@@ -184,12 +173,37 @@ export default function AdminScoringThresholdsPage() {
     setFilters({});
   };
 
-  const getMetricOptions = (stationType: StationType) => {
-    return METRIC_NAMES[stationType] || [];
+  const formatStationType = (type: string) => {
+    return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
-  const formatMetricName = (metric: string) => {
-    return metric.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const getScoreLabel = (score: number) => {
+    switch(score) {
+      case 3: return "Excellent";
+      case 2: return "Average";
+      case 1: return "Low";
+      default: return `Score ${score}`;
+    }
+  };
+
+  const getAgeRangeDisplay = (minAge: number, maxAge: number | null) => {
+    if (maxAge === null) {
+      return `${minAge}+`;
+    }
+    return `${minAge}-${maxAge}`;
+  };
+
+  const getValueRangeDisplay = (minValue: number | null, maxValue: number | null) => {
+    if (minValue === null && maxValue === null) {
+      return "Any";
+    }
+    if (minValue === null) {
+      return `≤ ${maxValue}`;
+    }
+    if (maxValue === null) {
+      return `≥ ${minValue}`;
+    }
+    return `${minValue} - ${maxValue}`;
   };
 
   return (
@@ -247,8 +261,7 @@ export default function AdminScoringThresholdsPage() {
                           onValueChange={(value: StationType) => {
                             setFormData(prev => ({
                               ...prev,
-                              station_type: value,
-                              metric_name: getMetricOptions(value)[0]
+                              station_type: value
                             }));
                           }}
                         >
@@ -258,36 +271,13 @@ export default function AdminScoringThresholdsPage() {
                           <SelectContent>
                             {STATION_TYPES.map(type => (
                               <SelectItem key={type} value={type}>
-                                {type.charAt(0).toUpperCase() + type.slice(1)}
+                                {formatStationType(type)}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
 
-                      <div>
-                        <Label htmlFor="metric_name">Metric</Label>
-                        <Select
-                          value={formData.metric_name}
-                          onValueChange={(value: MetricName) => {
-                            setFormData(prev => ({ ...prev, metric_name: value }));
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {getMetricOptions(formData.station_type).map(metric => (
-                              <SelectItem key={metric} value={metric}>
-                                {formatMetricName(metric)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="gender">Gender</Label>
                         <Select
@@ -308,24 +298,54 @@ export default function AdminScoringThresholdsPage() {
                           </SelectContent>
                         </Select>
                       </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="min_age">Min Age</Label>
+                        <Input
+                          id="min_age"
+                          type="number"
+                          min="0"
+                          value={formData.min_age}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            min_age: parseInt(e.target.value) || 0
+                          }))}
+                          required
+                        />
+                      </div>
 
                       <div>
-                        <Label htmlFor="age_group">Age Group</Label>
+                        <Label htmlFor="max_age">Max Age</Label>
+                        <Input
+                          id="max_age"
+                          type="number"
+                          min="0"
+                          value={formData.max_age || ""}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            max_age: e.target.value ? parseInt(e.target.value) : null
+                          }))}
+                          placeholder="No limit"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="score">Score</Label>
                         <Select
-                          value={formData.age_group}
-                          onValueChange={(value: AgeGroup) => {
-                            setFormData(prev => ({ ...prev, age_group: value }));
+                          value={formData.score.toString()}
+                          onValueChange={(value) => {
+                            setFormData(prev => ({ ...prev, score: parseInt(value) }));
                           }}
                         >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {AGE_GROUPS.map(group => (
-                              <SelectItem key={group} value={group}>
-                                {group}
-                              </SelectItem>
-                            ))}
+                            <SelectItem value="1">1 - Low</SelectItem>
+                            <SelectItem value="2">2 - Average</SelectItem>
+                            <SelectItem value="3">3 - Excellent</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -333,53 +353,34 @@ export default function AdminScoringThresholdsPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="average_score_min">Average Score Min</Label>
+                        <Label htmlFor="min_value">Min Value</Label>
                         <Input
-                          id="average_score_min"
+                          id="min_value"
                           type="number"
                           step="0.1"
-                          value={formData.average_score_min}
+                          value={formData.min_value || ""}
                           onChange={(e) => setFormData(prev => ({
                             ...prev,
-                            average_score_min: parseFloat(e.target.value) || 0
+                            min_value: e.target.value ? parseFloat(e.target.value) : null
                           }))}
-                          required
+                          placeholder="No minimum"
                         />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Values below this get Score 1
-                        </p>
                       </div>
 
                       <div>
-                        <Label htmlFor="average_score_max">Average Score Max</Label>
+                        <Label htmlFor="max_value">Max Value</Label>
                         <Input
-                          id="average_score_max"
+                          id="max_value"
                           type="number"
                           step="0.1"
-                          value={formData.average_score_max}
+                          value={formData.max_value || ""}
                           onChange={(e) => setFormData(prev => ({
                             ...prev,
-                            average_score_max: parseFloat(e.target.value) || 0
+                            max_value: e.target.value ? parseFloat(e.target.value) : null
                           }))}
-                          required
+                          placeholder="No maximum"
                         />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Values above this get Score 3
-                        </p>
                       </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="description">Description</Label>
-                      <Input
-                        id="description"
-                        value={formData.description}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          description: e.target.value
-                        }))}
-                        placeholder="Optional description"
-                      />
                     </div>
                   </div>
 
@@ -411,9 +412,12 @@ export default function AdminScoringThresholdsPage() {
               <Filter className="h-5 w-5" />
               Filters
             </CardTitle>
+            <CardDescription>
+              Filter scoring thresholds by station type, gender, and age. Enter an age to see all thresholds that apply to someone of that age.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4 items-end">
+            <div className="flex gap-4 items-end flex-wrap">
               <div>
                 <Label>Station Type</Label>
                 <Select
@@ -430,7 +434,7 @@ export default function AdminScoringThresholdsPage() {
                     <SelectItem value="all">All stations</SelectItem>
                     {STATION_TYPES.map(type => (
                       <SelectItem key={type} value={type}>
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                        {formatStationType(type)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -461,26 +465,19 @@ export default function AdminScoringThresholdsPage() {
               </div>
 
               <div>
-                <Label>Age Group</Label>
-                <Select
-                  value={filters.age_group || "all"}
-                  onValueChange={(value) => setFilters(prev => ({
+                <Label>Age</Label>
+                <Input
+                  type="number"
+                  placeholder="Enter age"
+                  className="w-32"
+                  min="0"
+                  value={filters.age || ""}
+                  onChange={(e) => setFilters(prev => ({
                     ...prev,
-                    age_group: value === "all" ? undefined : (value as AgeGroup)
+                    age: e.target.value ? parseInt(e.target.value) : undefined
                   }))}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="All ages" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All ages</SelectItem>
-                    {AGE_GROUPS.map(group => (
-                      <SelectItem key={group} value={group}>
-                        {group}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  title="Show all thresholds that apply to this age"
+                />
               </div>
 
               <Button variant="outline" onClick={clearFilters}>
@@ -517,12 +514,10 @@ export default function AdminScoringThresholdsPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Station</TableHead>
-                      <TableHead>Metric</TableHead>
                       <TableHead>Gender</TableHead>
-                      <TableHead>Age Group</TableHead>
-                      <TableHead>Average Min</TableHead>
-                      <TableHead>Average Max</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Age Range</TableHead>
+                      <TableHead>Value Range</TableHead>
+                      <TableHead>Score</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -531,27 +526,21 @@ export default function AdminScoringThresholdsPage() {
                       <TableRow key={threshold.id}>
                         <TableCell>
                           <Badge variant="outline">
-                            {threshold.station_type}
+                            {formatStationType(threshold.station_type)}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {formatMetricName(threshold.metric_name)}
+                          {threshold.gender.charAt(0).toUpperCase() + threshold.gender.slice(1)}
                         </TableCell>
                         <TableCell>
-                          {threshold.gender}
+                          {getAgeRangeDisplay(threshold.min_age, threshold.max_age)}
                         </TableCell>
                         <TableCell>
-                          {threshold.age_group}
+                          {getValueRangeDisplay(threshold.min_value, threshold.max_value)}
                         </TableCell>
                         <TableCell>
-                          {threshold.average_score_min}
-                        </TableCell>
-                        <TableCell>
-                          {threshold.average_score_max}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={threshold.is_active ? "default" : "secondary"}>
-                            {threshold.is_active ? "Active" : "Inactive"}
+                          <Badge variant={threshold.score === 3 ? "default" : threshold.score === 2 ? "secondary" : "destructive"}>
+                            {getScoreLabel(threshold.score)}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -603,94 +592,98 @@ export default function AdminScoringThresholdsPage() {
                   <div>
                     <Label>Station Type</Label>
                     <div className="p-2 bg-muted rounded text-sm">
-                      {formData.station_type}
+                      {formatStationType(formData.station_type)}
                     </div>
                   </div>
-                  <div>
-                    <Label>Metric</Label>
-                    <div className="p-2 bg-muted rounded text-sm">
-                      {formatMetricName(formData.metric_name)}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Gender</Label>
                     <div className="p-2 bg-muted rounded text-sm">
-                      {formData.gender}
+                      {formData.gender.charAt(0).toUpperCase() + formData.gender.slice(1)}
                     </div>
                   </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <Label>Age Group</Label>
-                    <div className="p-2 bg-muted rounded text-sm">
-                      {formData.age_group}
-                    </div>
+                    <Label htmlFor="edit_min_age">Min Age</Label>
+                    <Input
+                      id="edit_min_age"
+                      type="number"
+                      min="0"
+                      value={formData.min_age}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        min_age: parseInt(e.target.value) || 0
+                      }))}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="edit_max_age">Max Age</Label>
+                    <Input
+                      id="edit_max_age"
+                      type="number"
+                      min="0"
+                      value={formData.max_age || ""}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        max_age: e.target.value ? parseInt(e.target.value) : null
+                      }))}
+                      placeholder="No limit"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="edit_score">Score</Label>
+                    <Select
+                      value={formData.score.toString()}
+                      onValueChange={(value) => {
+                        setFormData(prev => ({ ...prev, score: parseInt(value) }));
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 - Low</SelectItem>
+                        <SelectItem value="2">2 - Average</SelectItem>
+                        <SelectItem value="3">3 - Excellent</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="edit_average_score_min">Average Score Min</Label>
+                    <Label htmlFor="edit_min_value">Min Value</Label>
                     <Input
-                      id="edit_average_score_min"
+                      id="edit_min_value"
                       type="number"
                       step="0.1"
-                      value={formData.average_score_min}
+                      value={formData.min_value || ""}
                       onChange={(e) => setFormData(prev => ({
                         ...prev,
-                        average_score_min: parseFloat(e.target.value) || 0
+                        min_value: e.target.value ? parseFloat(e.target.value) : null
                       }))}
-                      required
+                      placeholder="No minimum"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Values below this get Score 1
-                    </p>
                   </div>
 
                   <div>
-                    <Label htmlFor="edit_average_score_max">Average Score Max</Label>
+                    <Label htmlFor="edit_max_value">Max Value</Label>
                     <Input
-                      id="edit_average_score_max"
+                      id="edit_max_value"
                       type="number"
                       step="0.1"
-                      value={formData.average_score_max}
+                      value={formData.max_value || ""}
                       onChange={(e) => setFormData(prev => ({
                         ...prev,
-                        average_score_max: parseFloat(e.target.value) || 0
+                        max_value: e.target.value ? parseFloat(e.target.value) : null
                       }))}
-                      required
+                      placeholder="No maximum"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Values above this get Score 3
-                    </p>
                   </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="edit_description">Description</Label>
-                  <Input
-                    id="edit_description"
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      description: e.target.value
-                    }))}
-                    placeholder="Optional description"
-                  />
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="edit_is_active"
-                    checked={formData.is_active}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      is_active: e.target.checked
-                    }))}
-                  />
-                  <Label htmlFor="edit_is_active">Active</Label>
                 </div>
               </div>
 

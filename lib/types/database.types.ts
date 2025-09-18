@@ -140,43 +140,40 @@ export type Database = {
       }
       scoring_thresholds: {
         Row: {
-          age_group: string
-          average_score_max: number | null
-          average_score_min: number | null
-          created_at: string
-          description: string | null
+          created_at: string | null
           gender: string
           id: string
-          is_active: boolean
-          metric_name: string
+          max_age: number | null
+          max_value: number | null
+          min_age: number
+          min_value: number | null
+          score: number
           station_type: string
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
-          age_group: string
-          average_score_max?: number | null
-          average_score_min?: number | null
-          created_at?: string
-          description?: string | null
+          created_at?: string | null
           gender: string
           id?: string
-          is_active?: boolean
-          metric_name: string
+          max_age?: number | null
+          max_value?: number | null
+          min_age: number
+          min_value?: number | null
+          score: number
           station_type: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
-          age_group?: string
-          average_score_max?: number | null
-          average_score_min?: number | null
-          created_at?: string
-          description?: string | null
+          created_at?: string | null
           gender?: string
           id?: string
-          is_active?: boolean
-          metric_name?: string
+          max_age?: number | null
+          max_value?: number | null
+          min_age?: number
+          min_value?: number | null
+          score?: number
           station_type?: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

@@ -12,19 +12,20 @@ export type MeasurementData =
   | GripMeasurement;
 
 interface ScoringThreshold {
-  average_score_min: number | null;
-  average_score_max: number | null;
+  min_value: number | null;
+  max_value: number | null;
+  score: number;
 }
 
 interface ParticipantDemographics {
   gender: string;
-  age_group: string;
+  age: number;
 }
 
 /**
- * Calculate age group from date of birth
+ * Calculate age from date of birth
  */
-export function getAgeGroup(dateOfBirth: string): string {
+export function getAge(dateOfBirth: string): number {
   const birthDate = new Date(dateOfBirth);
   const today = new Date();
   const age = today.getFullYear() - birthDate.getFullYear();
@@ -36,14 +37,7 @@ export function getAgeGroup(dateOfBirth: string): string {
       ? age - 1
       : age;
 
-  if (actualAge >= 18 && actualAge <= 25) return "18-25";
-  if (actualAge >= 26 && actualAge <= 35) return "26-35";
-  if (actualAge >= 36 && actualAge <= 45) return "36-45";
-  if (actualAge >= 46 && actualAge <= 55) return "46-55";
-  if (actualAge >= 56 && actualAge <= 65) return "56-65";
-  if (actualAge >= 66) return "65+";
-
-  return "18-25"; // Default for edge cases
+  return Math.max(18, actualAge); // Minimum age of 18 for scoring
 }
 
 /**
@@ -74,69 +68,78 @@ export async function getParticipantDemographics(
     return null;
   }
 
-  const ageGroup = getAgeGroup(profile.date_of_birth);
+  const age = getAge(profile.date_of_birth);
 
   return {
     gender: profile.gender,
-    age_group: ageGroup,
+    age: age,
   };
 }
 
 /**
- * Get scoring thresholds for a specific metric and demographics
+ * Get scoring thresholds for a specific station type and demographics
  */
 export async function getScoringThresholds(
   stationType: StationType,
-  metricName: string,
   gender: string,
-  ageGroup: string
-): Promise<ScoringThreshold | null> {
+  age: number
+): Promise<ScoringThreshold[]> {
   const supabase = createAdminClient();
 
-  const { data: threshold, error } = await supabase
+  const { data: thresholds, error } = await supabase
     .from("scoring_thresholds")
-    .select("average_score_min, average_score_max")
+    .select("min_value, max_value, score, min_age, max_age")
     .eq("station_type", stationType)
-    .eq("metric_name", metricName)
     .eq("gender", gender)
-    .eq("age_group", ageGroup)
-    .eq("is_active", true)
-    .single();
+    .gte("min_age", Math.min(age, 60)) // Handle age bounds
+    .or(`max_age.gte.${age},max_age.is.null`); // Handle open-ended age ranges
 
-  if (error || !threshold) {
-    return null;
+  if (error || !thresholds) {
+    return [];
   }
 
-  return threshold;
+  // Filter thresholds that match the age range
+  return thresholds.filter(threshold => {
+    const minAge = threshold.min_age;
+    const maxAge = threshold.max_age;
+
+    // Age must be >= min_age
+    if (age < minAge) return false;
+
+    // If max_age is null, it's an open range (60+)
+    // Otherwise, age must be <= max_age
+    if (maxAge !== null && age > maxAge) return false;
+
+    return true;
+  }).map(t => ({
+    min_value: t.min_value,
+    max_value: t.max_value,
+    score: t.score
+  }));
 }
 
 /**
- * Calculate score for a single measurement using simplified thresholds
+ * Calculate score for a measurement using the scoring thresholds
  */
 export function calculateMeasurementScore(
   value: number,
-  thresholds: ScoringThreshold
+  thresholds: ScoringThreshold[]
 ): number {
-  // Handle null thresholds
-  if (
-    thresholds.average_score_min === null ||
-    thresholds.average_score_max === null
-  ) {
-    return 1;
+  // Find the threshold that matches this value
+  for (const threshold of thresholds) {
+    const { min_value, max_value, score } = threshold;
+
+    // Check if value falls within this threshold range
+    const withinMin = min_value === null || value >= min_value;
+    const withinMax = max_value === null || value <= max_value;
+
+    if (withinMin && withinMax) {
+      return score;
+    }
   }
 
-  // Simplified scoring logic:
-  // Score 3: value > average_score_max (excellent performance)
-  // Score 2: average_score_min <= value < average_score_max (average performance)
-  // Score 1: value < average_score_min (below average performance)
-
-  if (value > thresholds.average_score_max) {
-    return 3;
-  } else if (value >= thresholds.average_score_min) {
-    return 2;
-  } else {
-    return 1;
-  }
+  // Default to lowest score if no threshold matches
+  return 1;
 }
 
 /**
@@ -161,7 +164,7 @@ export function extractMeasurementValue(
         metricName: "balloon_diameter_cm",
       };
 
-    case "grip":
+    case "grip_strength":
       const gripMeasurement = measurements as GripMeasurement;
       return {
         value: gripMeasurement.grip_seconds,
@@ -204,14 +207,13 @@ export async function calculateStationScore(
     // Get scoring thresholds
     const thresholds = await getScoringThresholds(
       stationType,
-      measurementData.metricName,
       demographics.gender,
-      demographics.age_group
+      demographics.age
     );
 
-    if (!thresholds) {
+    if (!thresholds || thresholds.length === 0) {
       console.warn(
-        `No scoring thresholds found for ${stationType}/${measurementData.metricName}/${demographics.gender}/${demographics.age_group}, using default score`
+        `No scoring thresholds found for ${stationType}/${demographics.gender}/${demographics.age}, using default score`
       );
       return 1;
     }
@@ -220,7 +222,7 @@ export async function calculateStationScore(
     const score = calculateMeasurementScore(measurementData.value, thresholds);
 
     console.log(
-      `Calculated score for participant ${participantId}: ${stationType} = ${score} (${measurementData.value} ${measurementData.metricName})`
+      `Calculated score for participant ${participantId}: ${stationType} = ${score} (${measurementData.value} ${measurementData.metricName}, age: ${demographics.age}, gender: ${demographics.gender})`
     );
 
     return score;

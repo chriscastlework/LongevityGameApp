@@ -252,43 +252,40 @@ export type Database = {
       }
       scoring_thresholds: {
         Row: {
-          id: string
-          created_at: string
-          updated_at: string
-          station_type: string
-          metric_name: string
+          created_at: string | null
           gender: string
-          age_group: string
-          average_score_min: number | null
-          average_score_max: number | null
-          description: string | null
-          is_active: boolean
+          id: string
+          max_age: number | null
+          max_value: number | null
+          min_age: number
+          min_value: number | null
+          score: number
+          station_type: string
+          updated_at: string | null
         }
         Insert: {
-          id?: string
-          created_at?: string
-          updated_at?: string
-          station_type: string
-          metric_name: string
+          created_at?: string | null
           gender: string
-          age_group: string
-          average_score_min?: number | null
-          average_score_max?: number | null
-          description?: string | null
-          is_active?: boolean
+          id?: string
+          max_age?: number | null
+          max_value?: number | null
+          min_age: number
+          min_value?: number | null
+          score: number
+          station_type: string
+          updated_at?: string | null
         }
         Update: {
-          id?: string
-          created_at?: string
-          updated_at?: string
-          station_type?: string
-          metric_name?: string
+          created_at?: string | null
           gender?: string
-          age_group?: string
-          average_score_min?: number | null
-          average_score_max?: number | null
-          description?: string | null
-          is_active?: boolean
+          id?: string
+          max_age?: number | null
+          max_value?: number | null
+          min_age?: number
+          min_value?: number | null
+          score?: number
+          station_type?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -536,7 +533,7 @@ export const Constants = {
 // Custom application types
 export type Grade = "Above Average" | "Average" | "Bad";
 
-export type StationType = "balance" | "breath" | "grip";
+export type StationType = "balance" | "breath" | "grip_strength";
 
 export type AgeGroup = "18-25" | "26-35" | "36-45" | "46-55" | "56-65" | "65+";
 

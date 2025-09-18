@@ -5,13 +5,13 @@ import type { ScoringThreshold, ScoringThresholdInsert, ScoringThresholdUpdate }
 export const scoringThresholdsQueryKey = (filters?: {
   station_type?: string;
   gender?: string;
-  age_group?: string;
+  age?: number;
 }) => ["scoringThresholds", filters] as const;
 
 interface ScoringThresholdFilters {
   station_type?: string;
   gender?: string;
-  age_group?: string;
+  age?: number;
 }
 
 // Hook to fetch scoring thresholds (admin only)
@@ -22,7 +22,7 @@ export function useScoringThresholds(filters?: ScoringThresholdFilters) {
       const params = new URLSearchParams();
       if (filters?.station_type) params.set('station_type', filters.station_type);
       if (filters?.gender) params.set('gender', filters.gender);
-      if (filters?.age_group) params.set('age_group', filters.age_group);
+      if (filters?.age !== undefined) params.set('age', filters.age.toString());
 
       const url = `/api/admin/scoring-thresholds${params.toString() ? `?${params.toString()}` : ''}`;
 

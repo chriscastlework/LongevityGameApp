@@ -66,7 +66,7 @@ export function StationEntryForm({ station, participantCode, onSubmit, isSubmitt
           schema: breathSchema,
           defaults: { balloon_diameter_cm: 0 }
         };
-      case "grip":
+      case "grip_strength":
         return {
           schema: gripSchema,
           defaults: { grip_seconds: 0 }
@@ -175,7 +175,7 @@ export function StationEntryForm({ station, participantCode, onSubmit, isSubmitt
     switch (station) {
       case "balance": return renderBalanceForm();
       case "breath": return renderBreathForm();
-      case "grip": return renderGripForm();
+      case "grip_strength": return renderGripForm();
       default: return <div>Unknown station type</div>;
     }
   };
