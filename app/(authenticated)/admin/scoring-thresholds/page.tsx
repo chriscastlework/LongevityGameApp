@@ -62,9 +62,8 @@ interface ThresholdFormData {
   gender: Gender;
   min_age: number;
   max_age: number | null;
-  score: number;
-  min_value: number | null;
-  max_value: number | null;
+  min_average_value: number;
+  max_average_value: number;
 }
 
 export default function AdminScoringThresholdsPage() {
@@ -90,9 +89,8 @@ export default function AdminScoringThresholdsPage() {
     gender: "male",
     min_age: 18,
     max_age: 39,
-    score: 1,
-    min_value: null,
-    max_value: null,
+    min_average_value: 0,
+    max_average_value: 0,
   });
 
   // Hooks
@@ -177,9 +175,8 @@ export default function AdminScoringThresholdsPage() {
       gender: threshold.gender as Gender,
       min_age: threshold.min_age,
       max_age: threshold.max_age,
-      score: threshold.score,
-      min_value: threshold.min_value,
-      max_value: threshold.max_value,
+      min_average_value: threshold.min_average_value,
+      max_average_value: threshold.max_average_value,
     });
     setIsEditModalOpen(true);
   };
@@ -190,9 +187,8 @@ export default function AdminScoringThresholdsPage() {
       gender: "male",
       min_age: 18,
       max_age: 39,
-      score: 1,
-      min_value: null,
-      max_value: null,
+      min_average_value: 0,
+      max_average_value: 0,
     });
   };
 
@@ -204,17 +200,8 @@ export default function AdminScoringThresholdsPage() {
     return type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
-  const getScoreLabel = (score: number) => {
-    switch (score) {
-      case 3:
-        return "Excellent";
-      case 2:
-        return "Average";
-      case 1:
-        return "Low";
-      default:
-        return `Score ${score}`;
-    }
+  const getScoreDescription = (minAverage: number, maxAverage: number) => {
+    return `Poor: <${minAverage} | Average: ${minAverage}-${maxAverage} | Excellent: >${maxAverage}`;
   };
 
   const getAgeRangeDisplay = (minAge: number, maxAge: number | null) => {
@@ -225,19 +212,10 @@ export default function AdminScoringThresholdsPage() {
   };
 
   const getValueRangeDisplay = (
-    minValue: number | null,
-    maxValue: number | null
+    minAverageValue: number,
+    maxAverageValue: number
   ) => {
-    if (minValue === null && maxValue === null) {
-      return "Any";
-    }
-    if (minValue === null) {
-      return `≤ ${maxValue}`;
-    }
-    if (maxValue === null) {
-      return `≥ ${minValue}`;
-    }
-    return `${minValue} - ${maxValue}`;
+    return `${minAverageValue} - ${maxAverageValue}`;
   };
 
   return (
@@ -341,7 +319,7 @@ export default function AdminScoringThresholdsPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="min_age">Min Age</Label>
                         <Input
@@ -377,68 +355,46 @@ export default function AdminScoringThresholdsPage() {
                           placeholder="No limit"
                         />
                       </div>
-
-                      <div>
-                        <Label htmlFor="score">Score</Label>
-                        <Select
-                          value={formData.score.toString()}
-                          onValueChange={(value) => {
-                            setFormData((prev) => ({
-                              ...prev,
-                              score: parseInt(value),
-                            }));
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1">1 - Low</SelectItem>
-                            <SelectItem value="2">2 - Average</SelectItem>
-                            <SelectItem value="3">3 - Excellent</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="min_value">Min Value</Label>
+                        <Label htmlFor="min_average_value">Min Average Value</Label>
                         <Input
-                          id="min_value"
+                          id="min_average_value"
                           type="number"
                           step="0.1"
-                          value={formData.min_value || ""}
+                          value={formData.min_average_value}
                           onChange={(e) =>
                             setFormData((prev) => ({
                               ...prev,
-                              min_value: e.target.value
-                                ? parseFloat(e.target.value)
-                                : null,
+                              min_average_value: parseFloat(e.target.value) || 0,
                             }))
                           }
-                          placeholder="No minimum"
+                          required
                         />
                       </div>
 
                       <div>
-                        <Label htmlFor="max_value">Max Value</Label>
+                        <Label htmlFor="max_average_value">Max Average Value</Label>
                         <Input
-                          id="max_value"
+                          id="max_average_value"
                           type="number"
                           step="0.1"
-                          value={formData.max_value || ""}
+                          value={formData.max_average_value}
                           onChange={(e) =>
                             setFormData((prev) => ({
                               ...prev,
-                              max_value: e.target.value
-                                ? parseFloat(e.target.value)
-                                : null,
+                              max_average_value: parseFloat(e.target.value) || 0,
                             }))
                           }
-                          placeholder="No maximum"
+                          required
                         />
                       </div>
+                    </div>
+
+                    <div className="text-sm text-muted-foreground">
+                      Scoring: Poor (&lt;{formData.min_average_value}) | Average ({formData.min_average_value}-{formData.max_average_value}) | Excellent (&gt;{formData.max_average_value})
                     </div>
                   </div>
 
@@ -585,8 +541,8 @@ export default function AdminScoringThresholdsPage() {
                       <TableHead>Station</TableHead>
                       <TableHead>Gender</TableHead>
                       <TableHead>Age Range</TableHead>
-                      <TableHead>Value Range</TableHead>
-                      <TableHead>Score</TableHead>
+                      <TableHead>Average Range</TableHead>
+                      <TableHead>Scoring Description</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -610,22 +566,14 @@ export default function AdminScoringThresholdsPage() {
                         </TableCell>
                         <TableCell>
                           {getValueRangeDisplay(
-                            threshold.min_value,
-                            threshold.max_value
+                            threshold.min_average_value,
+                            threshold.max_average_value
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge
-                            variant={
-                              threshold.score === 3
-                                ? "default"
-                                : threshold.score === 2
-                                ? "secondary"
-                                : "destructive"
-                            }
-                          >
-                            {getScoreLabel(threshold.score)}
-                          </Badge>
+                          <div className="text-xs text-muted-foreground">
+                            {getScoreDescription(threshold.min_average_value, threshold.max_average_value)}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
@@ -688,7 +636,7 @@ export default function AdminScoringThresholdsPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="edit_min_age">Min Age</Label>
                     <Input
@@ -724,68 +672,46 @@ export default function AdminScoringThresholdsPage() {
                       placeholder="No limit"
                     />
                   </div>
-
-                  <div>
-                    <Label htmlFor="edit_score">Score</Label>
-                    <Select
-                      value={formData.score.toString()}
-                      onValueChange={(value) => {
-                        setFormData((prev) => ({
-                          ...prev,
-                          score: parseInt(value),
-                        }));
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1 - Low</SelectItem>
-                        <SelectItem value="2">2 - Average</SelectItem>
-                        <SelectItem value="3">3 - Excellent</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="edit_min_value">Min Value</Label>
+                    <Label htmlFor="edit_min_average_value">Min Average Value</Label>
                     <Input
-                      id="edit_min_value"
+                      id="edit_min_average_value"
                       type="number"
                       step="0.1"
-                      value={formData.min_value || ""}
+                      value={formData.min_average_value}
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          min_value: e.target.value
-                            ? parseFloat(e.target.value)
-                            : null,
+                          min_average_value: parseFloat(e.target.value) || 0,
                         }))
                       }
-                      placeholder="No minimum"
+                      required
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="edit_max_value">Max Value</Label>
+                    <Label htmlFor="edit_max_average_value">Max Average Value</Label>
                     <Input
-                      id="edit_max_value"
+                      id="edit_max_average_value"
                       type="number"
                       step="0.1"
-                      value={formData.max_value || ""}
+                      value={formData.max_average_value}
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          max_value: e.target.value
-                            ? parseFloat(e.target.value)
-                            : null,
+                          max_average_value: parseFloat(e.target.value) || 0,
                         }))
                       }
-                      placeholder="No maximum"
+                      required
                     />
                   </div>
+                </div>
+
+                <div className="text-sm text-muted-foreground">
+                  Scoring: Poor (&lt;{formData.min_average_value}) | Average ({formData.min_average_value}-{formData.max_average_value}) | Excellent (&gt;{formData.max_average_value})
                 </div>
               </div>
 

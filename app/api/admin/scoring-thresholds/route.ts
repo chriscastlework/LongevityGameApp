@@ -105,12 +105,12 @@ export async function POST(request: NextRequest) {
     const body: ScoringThresholdInsert = await request.json();
 
     // Validate required fields
-    const { station_type, gender, min_age, score } = body;
-    if (!station_type || !gender || min_age === undefined || score === undefined) {
+    const { station_type, gender, min_age, min_average_value, max_average_value } = body;
+    if (!station_type || !gender || min_age === undefined || min_average_value === undefined || max_average_value === undefined) {
       return NextResponse.json(
         {
           error:
-            "Missing required fields: station_type, gender, min_age, score",
+            "Missing required fields: station_type, gender, min_age, min_average_value, max_average_value",
         },
         { status: 400 }
       );
@@ -122,8 +122,7 @@ export async function POST(request: NextRequest) {
       .select("id")
       .eq("station_type", station_type)
       .eq("gender", gender)
-      .eq("min_age", min_age)
-      .eq("score", score);
+      .eq("min_age", min_age);
 
     if (body.max_age === null || body.max_age === undefined) {
       existingQuery = existingQuery.is("max_age", null);

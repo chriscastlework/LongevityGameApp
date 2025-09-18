@@ -256,10 +256,9 @@ export type Database = {
           gender: string;
           id: string;
           max_age: number | null;
-          max_value: number | null;
+          max_average_value: number;
           min_age: number;
-          min_value: number | null;
-          score: number;
+          min_average_value: number;
           station_type: string;
           updated_at: string | null;
         };
@@ -268,10 +267,9 @@ export type Database = {
           gender: string;
           id?: string;
           max_age?: number | null;
-          max_value?: number | null;
+          max_average_value: number;
           min_age: number;
-          min_value?: number | null;
-          score: number;
+          min_average_value: number;
           station_type: string;
           updated_at?: string | null;
         };
@@ -280,10 +278,9 @@ export type Database = {
           gender?: string;
           id?: string;
           max_age?: number | null;
-          max_value?: number | null;
+          max_average_value?: number;
           min_age?: number;
-          min_value?: number | null;
-          score?: number;
+          min_average_value?: number;
           station_type?: string;
           updated_at?: string | null;
         };
@@ -596,11 +593,13 @@ export type ParticipantProfileInsert = TablesInsert<"profiles">;
 
 // Re-export SignupFormData from auth types if it exists
 export interface SignupFormData {
+  fullName: string;
   name: string;
   email: string;
   password: string;
   dateOfBirth: string;
   gender: string;
   organisation: string;
+  organization: string;
   jobTitle: string;
 }

@@ -12,9 +12,8 @@ export type MeasurementData =
   | GripMeasurement;
 
 interface ScoringThreshold {
-  min_value: number | null;
-  max_value: number | null;
-  score: number;
+  min_average_value: number;
+  max_average_value: number;
 }
 
 interface ParticipantDemographics {
@@ -83,64 +82,69 @@ export async function getScoringThresholds(
   stationType: StationType,
   gender: string,
   age: number
-): Promise<ScoringThreshold[]> {
+): Promise<ScoringThreshold | null> {
   const supabase = createAdminClient();
 
   const { data: thresholds, error } = await supabase
     .from("scoring_thresholds")
-    .select("min_value, max_value, score, min_age, max_age")
+    .select("min_average_value, max_average_value, min_age, max_age")
     .eq("station_type", stationType)
     .eq("gender", gender)
-    .gte("min_age", Math.min(age, 60)) // Handle age bounds
+    .lte("min_age", age)
     .or(`max_age.gte.${age},max_age.is.null`); // Handle open-ended age ranges
 
-  if (error || !thresholds) {
-    return [];
+  if (error || !thresholds || thresholds.length === 0) {
+    return null;
   }
 
-  // Filter thresholds that match the age range
-  return thresholds
-    .filter((threshold) => {
-      const minAge = threshold.min_age;
-      const maxAge = threshold.max_age;
+  // Find the threshold that matches the age range
+  const matchingThreshold = thresholds.find((threshold) => {
+    const minAge = threshold.min_age;
+    const maxAge = threshold.max_age;
 
-      // Age must be >= min_age
-      if (age < minAge) return false;
+    // Age must be >= min_age
+    if (age < minAge) return false;
 
-      // If max_age is null, it's an open range (60+)
-      // Otherwise, age must be <= max_age
-      if (maxAge !== null && age > maxAge) return false;
+    // If max_age is null, it's an open range (60+)
+    // Otherwise, age must be <= max_age
+    if (maxAge !== null && age > maxAge) return false;
 
-      return true;
-    })
-    .map((t) => ({
-      min_value: t.min_value,
-      max_value: t.max_value,
-      score: t.score,
-    }));
+    return true;
+  });
+
+  if (!matchingThreshold) {
+    return null;
+  }
+
+  return {
+    min_average_value: matchingThreshold.min_average_value,
+    max_average_value: matchingThreshold.max_average_value,
+  };
 }
 
 /**
  * Calculate score for a measurement using the scoring thresholds
+ * poor score = 1 (below min_average_value)
+ * average score = 2 (between min_average_value and max_average_value)
+ * excellent score = 3 (above max_average_value)
  */
 export function calculateMeasurementScore(
   value: number,
-  thresholds: ScoringThreshold[]
+  threshold: ScoringThreshold
 ): number {
-  // Find the threshold that matches this value
-  for (const threshold of thresholds) {
-    const { min_value, max_value, score } = threshold;
+  const { min_average_value, max_average_value } = threshold;
 
-    // Check if value falls within this threshold range
-    const withinMin = min_value === null || value >= min_value;
-    const withinMax = max_value === null || value <= max_value;
-
-    if (withinMin && withinMax) {
-      return score;
-    }
+  // Excellent score: above max_average_value
+  if (value > max_average_value) {
+    return 3;
   }
 
-  // Default to lowest score if no threshold matches
+  // Average score: between min_average_value and max_average_value (inclusive)
+  if (value >= min_average_value && value <= max_average_value) {
+    return 2;
+  }
+
+  // Poor score: below min_average_value
   return 1;
 }
 
@@ -206,13 +210,13 @@ export async function calculateStationScore(
     }
 
     // Get scoring thresholds
-    const thresholds = await getScoringThresholds(
+    const threshold = await getScoringThresholds(
       stationType,
       demographics.gender,
       demographics.age
     );
 
-    if (!thresholds || thresholds.length === 0) {
+    if (!threshold) {
       console.warn(
         `No scoring thresholds found for ${stationType}/${demographics.gender}/${demographics.age}, using default score`
       );
@@ -220,7 +224,7 @@ export async function calculateStationScore(
     }
 
     // Calculate and return score
-    const score = calculateMeasurementScore(measurementData.value, thresholds);
+    const score = calculateMeasurementScore(measurementData.value, threshold);
 
     console.log(
       `Calculated score for participant ${participantId}: ${stationType} = ${score} (${measurementData.value} ${measurementData.metricName}, age: ${demographics.age}, gender: ${demographics.gender})`
