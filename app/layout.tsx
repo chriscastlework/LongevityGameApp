@@ -7,30 +7,30 @@ import "./globals.css";
 import { ClientProviders } from "@/components/providers/client-providers";
 
 export const metadata: Metadata = {
-  title: "Anywhere Competition App",
+  title: "Longevity Game App",
   description:
     "Join competitions, track your progress, and compete with others in our modern PWA platform.",
   generator: "v0.app",
   manifest: "/manifest.json",
   keywords: ["competition", "pwa", "mobile", "app", "contests", "leaderboard"],
-  authors: [{ name: "Anywhere Team" }],
-  creator: "Anywhere Team",
-  publisher: "Anywhere Team",
+  authors: [{ name: "Longevity Game Team" }],
+  creator: "Longevity Game Team",
+  publisher: "Longevity Game Team",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://anywhere-app.vercel.app"),
+  metadataBase: new URL("https://longevitygame.app"),
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "Anywhere Competition App",
+    title: "Longevity Game App",
     description:
       "Join competitions, track your progress, and compete with others in our modern PWA platform.",
-    url: "https://anywhere-app.vercel.app",
-    siteName: "Anywhere Competition App",
+    url: "https://longevitygame.app",
+    siteName: "Longevity Game App",
     images: [
       {
         url: "/icons/icon-512x512.jpg",
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Anywhere Competition App",
+    title: "Longevity Game App",
     description:
       "Join competitions, track your progress, and compete with others in our modern PWA platform.",
     images: ["/icons/icon-512x512.jpg"],
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Anywhere",
+    title: "Longevity Game",
   },
 };
 
@@ -82,7 +82,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Anywhere" />
+        <meta name="apple-mobile-web-app-title" content="Longevity Game" />
         <meta name="msapplication-TileColor" content="#3b82f6" />
         <meta
           name="msapplication-TileImage"
@@ -90,9 +90,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        <ClientProviders>
-          {children}
-        </ClientProviders>
+        <ClientProviders>{children}</ClientProviders>
         <Analytics />
       </body>
     </html>

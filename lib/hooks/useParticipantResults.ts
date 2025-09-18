@@ -7,6 +7,7 @@ interface ParticipantResult {
   stationDescription: string;
   measurements: any;
   score: number;
+  maxScore: number;
   completedAt: string;
 }
 

@@ -3,7 +3,13 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -22,8 +28,16 @@ function ParticipatePageContent() {
   const router = useRouter();
   const [qrValue, setQrValue] = useState("");
   const [participantCode, setParticipantCode] = useState<string | null>(null);
-  const { data: stations, isLoading: stationsLoading, error: stationsError } = useStations();
-  const { data: participantResults, isLoading: resultsLoading, error: resultsError } = useParticipantResults(user?.id);
+  const {
+    data: stations,
+    isLoading: stationsLoading,
+    error: stationsError,
+  } = useStations();
+  const {
+    data: participantResults,
+    isLoading: resultsLoading,
+    error: resultsError,
+  } = useParticipantResults(user?.id);
   // const { data: currentParticipant, isLoading: participantLoading, error: participantError } = useCurrentParticipant(user?.id);
 
   // Check if user's email is confirmed
@@ -31,8 +45,8 @@ function ParticipatePageContent() {
 
   // Check if user just confirmed their email and refresh auth context
   useEffect(() => {
-    const confirmed = searchParams.get('confirmed');
-    if (confirmed === 'true' && user) {
+    const confirmed = searchParams.get("confirmed");
+    if (confirmed === "true" && user) {
       // Small delay to ensure backend has processed the confirmation
       setTimeout(() => {
         refreshUser();
@@ -48,9 +62,9 @@ function ParticipatePageContent() {
       try {
         // Fetch the actual participant code from database using user ID
         const response = await fetch(`/api/participants/by-user/${user.id}`, {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         });
 
@@ -63,7 +77,7 @@ function ParticipatePageContent() {
           setParticipantCode(fallbackCode);
         }
       } catch (error) {
-        console.error('Error fetching participant code:', error);
+        console.error("Error fetching participant code:", error);
         // Fallback to generated code on error
         const fallbackCode = `LFG-${user.id.slice(-4).toUpperCase()}`;
         setParticipantCode(fallbackCode);
@@ -81,25 +95,24 @@ function ParticipatePageContent() {
     setQrValue(qrUrl);
   }, [isEmailConfirmed, user, profile, participantCode]);
 
-
   const handleResendConfirmation = async () => {
     try {
       // Call the resend confirmation API endpoint
-      const response = await fetch('/api/auth/resend-confirmation', {
-        method: 'POST',
+      const response = await fetch("/api/auth/resend-confirmation", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
       if (response.ok) {
-        alert('Confirmation email sent! Please check your inbox.');
+        alert("Confirmation email sent! Please check your inbox.");
       } else {
-        alert('Failed to send confirmation email. Please try again.');
+        alert("Failed to send confirmation email. Please try again.");
       }
     } catch (error) {
-      console.error('Error resending confirmation:', error);
-      alert('Failed to send confirmation email. Please try again.');
+      console.error("Error resending confirmation:", error);
+      alert("Failed to send confirmation email. Please try again.");
     }
   };
 
@@ -118,8 +131,7 @@ function ParticipatePageContent() {
           <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300">
             {isEmailConfirmed
               ? "You're ready to begin your fitness assessment!"
-              : "Please confirm your email to access your QR code"
-            }
+              : "Please confirm your email to access your QR code"}
           </p>
         </div>
 
@@ -130,7 +142,8 @@ function ParticipatePageContent() {
               <Mail className="h-4 w-4" />
               <AlertDescription className="flex items-center justify-between">
                 <span>
-                  Please check your email and click the confirmation link to activate your account and access your QR code.
+                  Please check your email and click the confirmation link to
+                  activate your account and access your QR code.
                 </span>
                 <Button
                   variant="outline"
@@ -149,12 +162,13 @@ function ParticipatePageContent() {
           {/* Participant Info & QR Code */}
           <Card className="lg:sticky lg:top-8">
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Your Participant Profile</CardTitle>
+              <CardTitle className="text-2xl">
+                Your Participant Profile
+              </CardTitle>
               <CardDescription>
                 {isEmailConfirmed
                   ? "Present this QR code to station operators"
-                  : "QR code will be available after email confirmation"
-                }
+                  : "QR code will be available after email confirmation"}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -182,12 +196,16 @@ function ParticipatePageContent() {
                     {isEmailConfirmed ? (
                       <>
                         <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span className="text-green-600 dark:text-green-400">Confirmed</span>
+                        <span className="text-green-600 dark:text-green-400">
+                          Confirmed
+                        </span>
                       </>
                     ) : (
                       <>
                         <Mail className="h-4 w-4 text-yellow-500" />
-                        <span className="text-yellow-600 dark:text-yellow-400">Pending</span>
+                        <span className="text-yellow-600 dark:text-yellow-400">
+                          Pending
+                        </span>
                       </>
                     )}
                   </div>
@@ -226,11 +244,18 @@ function ParticipatePageContent() {
                 ) : (
                   <div className="bg-muted/50 p-6 rounded-lg">
                     <Mail className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="font-semibold mb-2">Email Confirmation Required</h3>
+                    <h3 className="font-semibold mb-2">
+                      Email Confirmation Required
+                    </h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Your QR code will appear here once you confirm your email address
+                      Your QR code will appear here once you confirm your email
+                      address
                     </p>
-                    <Button onClick={handleResendConfirmation} variant="outline" size="sm">
+                    <Button
+                      onClick={handleResendConfirmation}
+                      variant="outline"
+                      size="sm"
+                    >
                       Resend Confirmation Email
                     </Button>
                   </div>
@@ -241,7 +266,7 @@ function ParticipatePageContent() {
 
           {/* Results and Progress */}
           <div className="space-y-6">
-            {isEmailConfirmed && participantResults && (
+            {isEmailConfirmed && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -258,52 +283,69 @@ function ParticipatePageContent() {
                       <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mx-auto mb-2">
                         <div className="w-4 h-4 bg-primary-foreground rounded-full animate-pulse" />
                       </div>
-                      <div className="text-sm text-muted-foreground">Loading your results...</div>
+                      <div className="text-sm text-muted-foreground">
+                        Loading your results...
+                      </div>
                     </div>
-                  ) : participantResults ? (
+                  ) : (
                     <div className="space-y-6">
                       {/* Progress Overview */}
                       <div className="grid md:grid-cols-3 gap-4">
                         <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                           <Target className="h-8 w-8 text-blue-600 mx-auto mb-2" />
                           <p className="text-2xl font-bold text-blue-600">
-                            {participantResults.progress.completedStations}/{participantResults.progress.totalStations}
+                            {participantResults?.progress.completedStations || 0}/
+                            {participantResults?.progress.totalStations || 4}
                           </p>
-                          <p className="text-sm text-muted-foreground">Stations Complete</p>
+                          <p className="text-sm text-muted-foreground">
+                            Stations Complete
+                          </p>
                         </div>
 
                         <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                           <TrendingUp className="h-8 w-8 text-green-600 mx-auto mb-2" />
                           <p className="text-2xl font-bold text-green-600">
-                            {participantResults.progress.totalScore}
-                            {participantResults.progress.maxPossibleScore > 0 && (
+                            {participantResults?.progress.totalScore || 0}
+                            {(participantResults?.progress.maxPossibleScore || 0) >
+                              0 && (
                               <span className="text-sm text-muted-foreground">
                                 /{participantResults.progress.maxPossibleScore}
                               </span>
                             )}
                           </p>
-                          <p className="text-sm text-muted-foreground">Total Score</p>
+                          <p className="text-sm text-muted-foreground">
+                            Total Score
+                          </p>
                         </div>
 
                         <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                           <Trophy className="h-8 w-8 text-purple-600 mx-auto mb-2" />
                           <p className="text-lg font-bold text-purple-600">
-                            {participantResults.progress.grade || "Not Graded"}
+                            {participantResults?.progress.grade || "Not Graded"}
                           </p>
-                          <p className="text-sm text-muted-foreground">Current Grade</p>
+                          <p className="text-sm text-muted-foreground">
+                            Current Grade
+                          </p>
                         </div>
                       </div>
 
                       {/* Individual Results */}
-                      {participantResults.results.length > 0 && (
+                      {(participantResults?.results.length || 0) > 0 && (
                         <>
                           <Separator />
                           <div>
-                            <h4 className="font-semibold mb-4">Completed Stations</h4>
+                            <h4 className="font-semibold mb-4">
+                              Completed Stations
+                            </h4>
                             <div className="grid gap-3">
-                              {participantResults.results.map((result) => {
-                                const station = stations?.find(s => s.station_type === result.stationType);
-                                const IconComponent = station && station.icon_name ? getIconByName(station.icon_name) : Target;
+                              {participantResults?.results.map((result) => {
+                                const station = stations?.find(
+                                  (s) => s.station_type === result.stationType
+                                );
+                                const IconComponent =
+                                  station && station.icon_name
+                                    ? getIconByName(station.icon_name)
+                                    : Target;
                                 const getScoreColor = (score: number) => {
                                   if (score >= 3) return "text-green-600";
                                   if (score >= 2) return "text-yellow-600";
@@ -315,20 +357,34 @@ function ParticipatePageContent() {
                                     key={result.id}
                                     className="flex items-center gap-4 p-3 border rounded-lg bg-muted/20"
                                   >
-                                    <div className={`p-2 rounded-full ${station?.color_class || 'bg-gray-500'} text-white`}>
+                                    <div
+                                      className={`p-2 rounded-full ${
+                                        station?.color_class || "bg-gray-500"
+                                      } text-white`}
+                                    >
                                       <IconComponent className="h-5 w-5" />
                                     </div>
                                     <div className="flex-1">
-                                      <h5 className="font-medium">{result.stationName}</h5>
+                                      <h5 className="font-medium">
+                                        {result.stationName}
+                                      </h5>
                                       <p className="text-sm text-muted-foreground">
-                                        {new Date(result.completedAt).toLocaleDateString()}
+                                        {new Date(
+                                          result.completedAt
+                                        ).toLocaleDateString()}
                                       </p>
                                     </div>
                                     <div className="text-right">
-                                      <p className={`text-lg font-bold ${getScoreColor(result.score)}`}>
-                                        {result.score}/3
+                                      <p
+                                        className={`text-lg font-bold ${getScoreColor(
+                                          result.score
+                                        )}`}
+                                      >
+                                        {result.score}/{result.maxScore || 3}
                                       </p>
-                                      <p className="text-xs text-muted-foreground">Score</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        Score
+                                      </p>
                                     </div>
                                   </div>
                                 );
@@ -339,43 +395,51 @@ function ParticipatePageContent() {
                       )}
 
                       {/* Remaining Stations */}
-                      {participantResults.progress.remainingStations.length > 0 && (
+                      {((participantResults?.progress.remainingStations.length || 4) > 0 || !participantResults) && (
                         <>
                           <Separator />
                           <div>
-                            <h4 className="font-semibold mb-4">Remaining Stations</h4>
+                            <h4 className="font-semibold mb-4">
+                              Remaining Stations
+                            </h4>
                             <div className="grid gap-3">
-                              {participantResults.progress.remainingStations.map((stationType) => {
-                                const station = stations?.find(s => s.station_type === stationType);
-                                const IconComponent = station && station.icon_name ? getIconByName(station.icon_name) : Target;
+                              {(participantResults?.progress.remainingStations || ['balance', 'breath', 'grip', 'health']).map(
+                                (stationType) => {
+                                  const station = stations?.find(
+                                    (s) => s.station_type === stationType
+                                  );
+                                  const IconComponent =
+                                    station && station.icon_name
+                                      ? getIconByName(station.icon_name)
+                                      : Target;
 
-                                return station ? (
-                                  <div
-                                    key={station.id}
-                                    className="flex items-center gap-4 p-3 border rounded-lg border-dashed opacity-60"
-                                  >
-                                    <div className={`p-2 rounded-full ${station.color_class} text-white opacity-75`}>
-                                      <IconComponent className="h-5 w-5" />
+                                  return station ? (
+                                    <div
+                                      key={station.id}
+                                      className="flex items-center gap-4 p-3 border rounded-lg border-dashed opacity-60"
+                                    >
+                                      <div
+                                        className={`p-2 rounded-full ${station.color_class} text-white opacity-75`}
+                                      >
+                                        <IconComponent className="h-5 w-5" />
+                                      </div>
+                                      <div className="flex-1">
+                                        <h5 className="font-medium">
+                                          {station.name}
+                                        </h5>
+                                        <p className="text-sm text-muted-foreground">
+                                          {station.description}
+                                        </p>
+                                      </div>
+                                      <Badge variant="outline">Pending</Badge>
                                     </div>
-                                    <div className="flex-1">
-                                      <h5 className="font-medium">{station.name}</h5>
-                                      <p className="text-sm text-muted-foreground">
-                                        {station.description}
-                                      </p>
-                                    </div>
-                                    <Badge variant="outline">Pending</Badge>
-                                  </div>
-                                ) : null;
-                              })}
+                                  ) : null;
+                                }
+                              )}
                             </div>
                           </div>
                         </>
                       )}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>Complete your first station to see your results here!</p>
                     </div>
                   )}
                 </CardContent>
@@ -387,7 +451,8 @@ function ParticipatePageContent() {
               <CardHeader>
                 <CardTitle>Testing Stations</CardTitle>
                 <CardDescription>
-                  Visit each station with a trained operator to complete your assessment
+                  Visit each station with a trained operator to complete your
+                  assessment
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -396,7 +461,9 @@ function ParticipatePageContent() {
                     <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mx-auto mb-2">
                       <div className="w-4 h-4 bg-primary-foreground rounded-full" />
                     </div>
-                    <div className="text-sm text-muted-foreground">Loading stations...</div>
+                    <div className="text-sm text-muted-foreground">
+                      Loading stations...
+                    </div>
                   </div>
                 ) : stationsError ? (
                   <div className="text-center py-8 text-red-500">
@@ -405,15 +472,23 @@ function ParticipatePageContent() {
                 ) : (
                   <div className="grid gap-4">
                     {stations?.map((station) => {
-                      const IconComponent = station.icon_name ? getIconByName(station.icon_name) : Target;
-                      const isCompleted = participantResults?.results.some(r => r.stationType === station.station_type);
+                      const IconComponent = station.icon_name
+                        ? getIconByName(station.icon_name)
+                        : Target;
+                      const isCompleted = participantResults?.results.some(
+                        (r) => r.stationType === station.station_type
+                      );
 
                       return (
                         <div
                           key={station.id}
                           className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                         >
-                          <div className={`p-3 rounded-full ${station.color_class} text-white ${isCompleted ? '' : 'opacity-75'}`}>
+                          <div
+                            className={`p-3 rounded-full ${
+                              station.color_class
+                            } text-white ${isCompleted ? "" : "opacity-75"}`}
+                          >
                             <IconComponent className="h-6 w-6" />
                           </div>
                           <div className="flex-1">
@@ -423,7 +498,11 @@ function ParticipatePageContent() {
                             </p>
                           </div>
                           <Badge variant={isCompleted ? "default" : "outline"}>
-                            {isCompleted ? "Completed" : isEmailConfirmed ? "Ready" : "Confirm Email"}
+                            {isCompleted
+                              ? "Completed"
+                              : isEmailConfirmed
+                              ? "Ready"
+                              : "Confirm Email"}
                           </Badge>
                         </div>
                       );
@@ -447,7 +526,8 @@ function ParticipatePageContent() {
                     <div>
                       <p className="font-medium">Confirm Your Email</p>
                       <p className="text-sm text-muted-foreground">
-                        Check your email and click the confirmation link to activate your account
+                        Check your email and click the confirmation link to
+                        activate your account
                       </p>
                     </div>
                   </div>
@@ -459,7 +539,8 @@ function ParticipatePageContent() {
                     <div>
                       <p className="font-medium">Present Your QR Code</p>
                       <p className="text-sm text-muted-foreground">
-                        Show your QR code to the station operator when you arrive
+                        Show your QR code to the station operator when you
+                        arrive
                       </p>
                     </div>
                   </div>
@@ -483,36 +564,11 @@ function ParticipatePageContent() {
                     <div>
                       <p className="font-medium">View Your Results</p>
                       <p className="text-sm text-muted-foreground">
-                        Your scores are calculated automatically and added to the leaderboard
+                        Your scores are calculated automatically and added to
+                        the leaderboard
                       </p>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-3">
-                  <Button
-                    className="flex-1"
-                    disabled={!isEmailConfirmed}
-                    onClick={() => router.push('/leaderboard')}
-                  >
-                    View Leaderboard
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    disabled={!isEmailConfirmed}
-                    onClick={() => router.push('/profile')}
-                  >
-                    My Results
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -525,16 +581,18 @@ function ParticipatePageContent() {
 
 export default function ParticipatePage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mb-2">
-            <div className="w-4 h-4 bg-primary-foreground rounded-full" />
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mb-2">
+              <div className="w-4 h-4 bg-primary-foreground rounded-full" />
+            </div>
+            <div className="text-sm text-muted-foreground">Loading...</div>
           </div>
-          <div className="text-sm text-muted-foreground">Loading...</div>
         </div>
-      </div>
-    }>
+      }
+    >
       <ParticipatePageContent />
     </Suspense>
   );

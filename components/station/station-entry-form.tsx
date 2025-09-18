@@ -113,11 +113,11 @@ export function StationEntryForm({
         return {
           schema: healthSchema,
           defaults: {
-            bp_systolic: 120,
-            bp_diastolic: 80,
-            pulse: 70,
-            spo2: 98,
-            bmi: 22
+            bp_systolic: null,
+            bp_diastolic: null,
+            pulse: null,
+            spo2: null,
+            bmi: null
           },
         };
       default:
@@ -239,7 +239,7 @@ export function StationEntryForm({
                 <FormLabel>Systolic BP (mmHg)</FormLabel>
                 <FormControl>
                   <NumberInput
-                    value={field.value || 120}
+                    value={field.value}
                     onChange={field.onChange}
                     min={50}
                     max={250}
@@ -262,7 +262,7 @@ export function StationEntryForm({
                 <FormLabel>Diastolic BP (mmHg)</FormLabel>
                 <FormControl>
                   <NumberInput
-                    value={field.value || 80}
+                    value={field.value}
                     onChange={field.onChange}
                     min={30}
                     max={150}
