@@ -73,14 +73,16 @@ export async function GET(request: NextRequest) {
         const balanceResult = participant.station_results.find(r => r.station_type === 'balance');
         const breathResult = participant.station_results.find(r => r.station_type === 'breath');
         const gripResult = participant.station_results.find(r => r.station_type === 'grip');
+        const healthResult = participant.station_results.find(r => r.station_type === 'health');
 
         // Use the scores that were properly calculated and stored in the database
         const scoreBalance = balanceResult?.score || null;
         const scoreBreath = breathResult?.score || null;
         const scoreGrip = gripResult?.score || null;
+        const scoreHealth = healthResult?.score || null;
 
         // Calculate total score (only count completed stations)
-        const scores = [scoreBalance, scoreBreath, scoreGrip].filter(s => s !== null) as number[];
+        const scores = [scoreBalance, scoreBreath, scoreGrip, scoreHealth].filter(s => s !== null) as number[];
         const totalScore = scores.length > 0 ? scores.reduce((sum, score) => sum + score, 0) : null;
 
         // Determine grade
@@ -101,7 +103,7 @@ export async function GET(request: NextRequest) {
           score_balance: scoreBalance,
           score_breath: scoreBreath,
           score_grip: scoreGrip,
-          score_health: null,
+          score_health: scoreHealth,
           total_score: totalScore,
           grade: grade,
           created_at: latestDate,

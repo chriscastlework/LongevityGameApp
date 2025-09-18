@@ -21,12 +21,21 @@ export async function GET(
 
     const supabase = createAdminClient();
 
+    // Debug: Let's see what participants exist
+    const { data: allParticipants } = await supabase
+      .from('participants')
+      .select('id, participant_code, user_id');
+    console.log('All participants in database:', allParticipants);
+    console.log('Looking for participant code:', participantCode);
+
     // Get participant first
     const { data: participant, error: participantError } = await supabase
       .from('participants')
       .select('*')
       .eq('participant_code', participantCode)
       .single();
+
+    console.log('Participant lookup result:', { participant, participantError });
 
     if (participantError || !participant) {
       console.error('Error fetching participant:', participantError);

@@ -533,7 +533,7 @@ export const Constants = {
 // Custom application types
 export type Grade = "Above Average" | "Average" | "Bad";
 
-export type StationType = "balance" | "breath" | "grip";
+export type StationType = "balance" | "breath" | "grip" | "health";
 
 export type AgeGroup = "18-25" | "26-35" | "36-45" | "46-55" | "56-65" | "65+";
 
@@ -561,6 +561,14 @@ export interface BreathMeasurement {
 
 export interface GripMeasurement {
   grip_seconds: number;
+}
+
+export interface HealthMeasurement {
+  bp_systolic: number;
+  bp_diastolic: number;
+  pulse: number;
+  spo2: number;
+  bmi: number;
 }
 
 export interface LeaderboardEntry {

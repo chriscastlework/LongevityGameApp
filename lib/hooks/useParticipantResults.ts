@@ -39,8 +39,8 @@ export function useParticipantResults(userId: string | undefined) {
           results: [],
           progress: {
             completedStations: 0,
-            totalStations: 3,
-            remainingStations: ['balance', 'breath', 'grip'],
+            totalStations: 4,
+            remainingStations: ['balance', 'breath', 'grip', 'health'],
             totalScore: 0,
             maxPossibleScore: 0,
             grade: null
@@ -66,8 +66,8 @@ export function useParticipantResults(userId: string | undefined) {
               results: [],
               progress: {
                 completedStations: 0,
-                totalStations: 3,
-                remainingStations: ['balance', 'breath', 'grip'],
+                totalStations: 4,
+                remainingStations: ['balance', 'breath', 'grip', 'health'],
                 totalScore: 0,
                 maxPossibleScore: 0,
                 grade: null

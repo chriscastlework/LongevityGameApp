@@ -54,7 +54,7 @@ import type {
   Gender,
 } from "@/lib/types/database";
 
-const STATION_TYPES: StationType[] = ["balance", "breath", "grip"];
+const STATION_TYPES: StationType[] = ["balance", "breath", "grip", "health"];
 const GENDERS: Gender[] = ["male", "female"];
 
 interface ThresholdFormData {

@@ -4,12 +4,14 @@ import type {
   BalanceMeasurement,
   BreathMeasurement,
   GripMeasurement,
+  HealthMeasurement,
 } from "@/lib/types/database";
 
 export type MeasurementData =
   | BalanceMeasurement
   | BreathMeasurement
-  | GripMeasurement;
+  | GripMeasurement
+  | HealthMeasurement;
 
 interface ScoringThreshold {
   min_average_value: number;
@@ -149,6 +151,70 @@ export function calculateMeasurementScore(
 }
 
 /**
+ * Calculate score for health measurements with custom logic for each metric
+ */
+export function calculateHealthMetricScore(
+  metricName: string,
+  value: number
+): number {
+  switch (metricName) {
+    case "bp_systolic":
+      // Above Average: 100–129 mmHg, Average: 130–139 mmHg, Bad: ≥ 140 mmHg
+      if (value >= 100 && value <= 129) return 3;
+      if (value >= 130 && value <= 139) return 2;
+      return 1;
+
+    case "bp_diastolic":
+      // Above Average: 60–79 mmHg, Average: 80–89 mmHg, Bad: ≥ 90 mmHg
+      if (value >= 60 && value <= 79) return 3;
+      if (value >= 80 && value <= 89) return 2;
+      return 1;
+
+    case "pulse":
+      // Above Average: 50–70 bpm, Average: 71–85 bpm, Bad: > 85 bpm
+      if (value >= 50 && value <= 70) return 3;
+      if (value >= 71 && value <= 85) return 2;
+      return 1;
+
+    case "spo2":
+      // Above Average: 97–100%, Average: 94–96%, Bad: ≤ 93%
+      if (value >= 97 && value <= 100) return 3;
+      if (value >= 94 && value <= 96) return 2;
+      return 1;
+
+    case "bmi":
+      // Above Average: 18.5–24.9, Average: 25–29.9, Bad: ≥ 30 or < 18.5
+      if (value >= 18.5 && value <= 24.9) return 3;
+      if (value >= 25 && value <= 29.9) return 2;
+      return 1;
+
+    default:
+      return 1;
+  }
+}
+
+/**
+ * Calculate overall health station score by averaging all metrics
+ */
+export function calculateHealthStationScore(
+  measurements: HealthMeasurement
+): number {
+  const scores = [
+    calculateHealthMetricScore("bp_systolic", measurements.bp_systolic),
+    calculateHealthMetricScore("bp_diastolic", measurements.bp_diastolic),
+    calculateHealthMetricScore("pulse", measurements.pulse),
+    calculateHealthMetricScore("spo2", measurements.spo2),
+    calculateHealthMetricScore("bmi", measurements.bmi),
+  ];
+
+  const totalScore = scores.reduce((sum, score) => sum + score, 0);
+  const averageScore = totalScore / scores.length;
+
+  // Round to nearest integer, but ensure it's between 1 and 3
+  return Math.max(1, Math.min(3, Math.round(averageScore)));
+}
+
+/**
  * Extract measurement value from station measurements based on station type
  */
 export function extractMeasurementValue(
@@ -177,6 +243,13 @@ export function extractMeasurementValue(
         metricName: "grip_seconds",
       };
 
+    case "health":
+      // Health station uses custom scoring, return a dummy value
+      return {
+        value: 0,
+        metricName: "health_composite",
+      };
+
     default:
       return null;
   }
@@ -191,7 +264,19 @@ export async function calculateStationScore(
   measurements: MeasurementData
 ): Promise<number> {
   try {
-    // Get participant demographics
+    // Special handling for health station
+    if (stationType === "health") {
+      const healthMeasurements = measurements as HealthMeasurement;
+      const score = calculateHealthStationScore(healthMeasurements);
+
+      console.log(
+        `Calculated health score for participant ${participantId}: ${score} (BP: ${healthMeasurements.bp_systolic}/${healthMeasurements.bp_diastolic}, HR: ${healthMeasurements.pulse}, SpO2: ${healthMeasurements.spo2}%, BMI: ${healthMeasurements.bmi})`
+      );
+
+      return score;
+    }
+
+    // Get participant demographics for other stations
     const demographics = await getParticipantDemographics(participantId);
     if (!demographics) {
       console.warn(

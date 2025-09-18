@@ -26,6 +26,7 @@ import type {
   BalanceMeasurement,
   BreathMeasurement,
   GripMeasurement,
+  HealthMeasurement,
 } from "@/lib/types/database";
 
 // Schemas for each station type
@@ -50,11 +51,34 @@ const gripSchema = z.object({
     .max(600, "Grip time cannot exceed 10 minutes"),
 });
 
+const healthSchema = z.object({
+  bp_systolic: z
+    .number()
+    .min(50, "Systolic BP too low")
+    .max(250, "Systolic BP too high"),
+  bp_diastolic: z
+    .number()
+    .min(30, "Diastolic BP too low")
+    .max(150, "Diastolic BP too high"),
+  pulse: z
+    .number()
+    .min(30, "Heart rate too low")
+    .max(200, "Heart rate too high"),
+  spo2: z
+    .number()
+    .min(70, "SpO₂ too low")
+    .max(100, "SpO₂ cannot exceed 100%"),
+  bmi: z
+    .number()
+    .min(10, "BMI too low")
+    .max(60, "BMI too high"),
+});
+
 interface StationEntryFormProps {
   station: StationType;
   participantCode: string;
   onSubmit: (
-    data: BalanceMeasurement | BreathMeasurement | GripMeasurement
+    data: BalanceMeasurement | BreathMeasurement | GripMeasurement | HealthMeasurement
   ) => void;
   isSubmitting?: boolean;
 }
@@ -85,6 +109,17 @@ export function StationEntryForm({
           schema: gripSchema,
           defaults: { grip_seconds: 0 },
         };
+      case "health":
+        return {
+          schema: healthSchema,
+          defaults: {
+            bp_systolic: 120,
+            bp_diastolic: 80,
+            pulse: 70,
+            spo2: 98,
+            bmi: 22
+          },
+        };
       default:
         return {
           schema: z.object({}),
@@ -99,6 +134,7 @@ export function StationEntryForm({
     resolver: zodResolver(schema),
     defaultValues: defaults,
   });
+
 
   const handleSubmit = async (data: any) => {
     setError(null);
@@ -183,6 +219,148 @@ export function StationEntryForm({
     />
   );
 
+  const renderHealthForm = () => (
+    <div className="space-y-4">
+      <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-4">
+        <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
+          Complete all health measurements for this participant
+        </p>
+      </div>
+
+      {/* Blood Pressure */}
+      <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+        <h3 className="text-lg font-semibold mb-3">Blood Pressure</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="bp_systolic"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Systolic BP (mmHg)</FormLabel>
+                <FormControl>
+                  <NumberInput
+                    value={field.value || 120}
+                    onChange={field.onChange}
+                    min={50}
+                    max={250}
+                    placeholder="120"
+                  />
+                </FormControl>
+                <FormDescription>
+                  Above Average: 100-129, Average: 130-139, Bad: &ge;140
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="bp_diastolic"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Diastolic BP (mmHg)</FormLabel>
+                <FormControl>
+                  <NumberInput
+                    value={field.value || 80}
+                    onChange={field.onChange}
+                    min={30}
+                    max={150}
+                    placeholder="80"
+                  />
+                </FormControl>
+                <FormDescription>
+                  Above Average: 60-79, Average: 80-89, Bad: &ge;90
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      </div>
+
+      {/* Heart Rate and SpO2 */}
+      <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+        <h3 className="text-lg font-semibold mb-3">Vital Signs</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="pulse"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Heart Rate (bpm)</FormLabel>
+                <FormControl>
+                  <NumberInput
+                    value={field.value || 70}
+                    onChange={field.onChange}
+                    min={30}
+                    max={200}
+                    placeholder="70"
+                  />
+                </FormControl>
+                <FormDescription>
+                  Above Average: 50-70, Average: 71-85, Bad: &gt;85
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="spo2"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>SpO₂ (%)</FormLabel>
+                <FormControl>
+                  <NumberInput
+                    value={field.value || 98}
+                    onChange={field.onChange}
+                    min={70}
+                    max={100}
+                    placeholder="98"
+                  />
+                </FormControl>
+                <FormDescription>
+                  Above Average: 97-100%, Average: 94-96%, Bad: &le;93%
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      </div>
+
+      {/* BMI */}
+      <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+        <h3 className="text-lg font-semibold mb-3">Body Mass Index</h3>
+        <FormField
+          control={form.control}
+          name="bmi"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>BMI</FormLabel>
+              <FormControl>
+                <NumberInput
+                  value={field.value || 22}
+                  onChange={field.onChange}
+                  min={10}
+                  max={60}
+                  placeholder="22.0"
+                  step={0.1}
+                />
+              </FormControl>
+              <FormDescription>
+                Above Average: 18.5-24.9, Average: 25-29.9, Bad: &ge;30 or &lt;18.5
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    </div>
+  );
+
   const renderFormFields = () => {
     switch (station) {
       case "balance":
@@ -191,6 +369,8 @@ export function StationEntryForm({
         return renderBreathForm();
       case "grip":
         return renderGripForm();
+      case "health":
+        return renderHealthForm();
       default:
         return <div>Unknown station type</div>;
     }

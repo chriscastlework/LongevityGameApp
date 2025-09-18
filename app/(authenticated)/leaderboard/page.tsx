@@ -165,7 +165,7 @@ export default function LeaderboardPage() {
           <CardHeader>
             <CardTitle>Rankings</CardTitle>
             <CardDescription>
-              Participants ranked by total score across all three fitness stations
+              Participants ranked by total score across all four fitness stations
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -186,6 +186,7 @@ export default function LeaderboardPage() {
                     <TableHead className="text-center">Balance</TableHead>
                     <TableHead className="text-center">Breath</TableHead>
                     <TableHead className="text-center">Grip</TableHead>
+                    <TableHead className="text-center">Health</TableHead>
                     <TableHead className="text-center">Total</TableHead>
                     <TableHead className="text-center">Grade</TableHead>
                     <TableHead>Date</TableHead>
@@ -231,6 +232,11 @@ export default function LeaderboardPage() {
                       </span>
                     </TableCell>
 
+                    <TableCell className="text-center">
+                      <span className={`font-medium ${getScoreColor(participant.score_health)}`}>
+                        {participant.score_health || "-"}
+                      </span>
+                    </TableCell>
 
                     <TableCell className="text-center">
                       <span className="text-lg font-bold">

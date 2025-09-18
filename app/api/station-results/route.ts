@@ -66,6 +66,13 @@ export async function POST(request: NextRequest) {
 
     // Find the participant by participant_code
     console.log("Looking for participant with code:", participantCode);
+
+    // First, let's see all participants to debug
+    const { data: allParticipants } = await supabase
+      .from("participants")
+      .select("id, participant_code, user_id");
+    console.log("All participants in database:", allParticipants);
+
     const { data: participant, error: participantError } = await supabase
       .from("participants")
       .select("id, user_id")
