@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { participantResultsQueryKey } from "./useParticipantResults";
-import type { StationType, BalanceMeasurement, BreathMeasurement, GripMeasurement, HealthMeasurement } from "@/lib/types/database";
+import type { StationType, BalanceMeasurement, BreathMeasurement, GripMeasurement } from "@/lib/types/database";
 
-type MeasurementData = BalanceMeasurement | BreathMeasurement | GripMeasurement | HealthMeasurement;
+type MeasurementData = BalanceMeasurement | BreathMeasurement | GripMeasurement;
 
 interface StationResultRequest {
   participantCode: string;

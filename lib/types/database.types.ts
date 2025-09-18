@@ -14,38 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      health_assessments: {
-        Row: {
-          assessment_data: Json
-          completed_at: string | null
-          created_at: string | null
-          id: string
-          participant_id: string
-        }
-        Insert: {
-          assessment_data: Json
-          completed_at?: string | null
-          created_at?: string | null
-          id?: string
-          participant_id: string
-        }
-        Update: {
-          assessment_data?: Json
-          completed_at?: string | null
-          created_at?: string | null
-          id?: string
-          participant_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "health_assessments_participant_id_fkey"
-            columns: ["participant_id"]
-            isOneToOne: false
-            referencedRelation: "participants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       participants: {
         Row: {
           agreement_accepted: boolean | null
@@ -339,6 +307,10 @@ export type Database = {
       authorize_role: {
         Args: { required_roles: Database["public"]["Enums"]["user_role"][] }
         Returns: boolean
+      }
+      calculate_participant_score: {
+        Args: { participant_id: string }
+        Returns: undefined
       }
       compute_scores_for_participant: {
         Args: { p_id: string }

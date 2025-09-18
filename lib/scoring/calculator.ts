@@ -4,14 +4,12 @@ import type {
   BalanceMeasurement,
   BreathMeasurement,
   GripMeasurement,
-  HealthMeasurement,
 } from "@/lib/types/database";
 
 export type MeasurementData =
   | BalanceMeasurement
   | BreathMeasurement
-  | GripMeasurement
-  | HealthMeasurement;
+  | GripMeasurement;
 
 interface ScoringThreshold {
   average_score_min: number | null;
@@ -170,12 +168,6 @@ export function extractMeasurementValue(
         metricName: "grip_seconds",
       };
 
-    case "health":
-      const healthMeasurement = measurements as HealthMeasurement;
-      return {
-        value: healthMeasurement.bmi,
-        metricName: "bmi",
-      };
 
     default:
       return null;

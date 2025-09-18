@@ -95,7 +95,7 @@ export async function GET(
     });
 
     // Calculate overall progress
-    const allStations = ['balance', 'breath', 'grip', 'health'];
+    const allStations = ['balance', 'breath', 'grip'];
     const completedStations = resultsWithScores.map(r => r.stationType);
     const remainingStations = allStations.filter(station => !completedStations.includes(station));
 
@@ -134,8 +134,6 @@ function calculateStationScore(stationType: string, measurements: any): number {
       return calculateBreathScore(measurements);
     case 'grip':
       return calculateGripScore(measurements);
-    case 'health':
-      return calculateHealthScore(measurements);
     default:
       return 0;
   }
@@ -164,28 +162,6 @@ function calculateGripScore(measurements: any): number {
   return 1;
 }
 
-function calculateHealthScore(measurements: any): number {
-  const bmi = measurements?.bmi || 22;
-  const spo2 = measurements?.spo2 || 98;
-  const pulse = measurements?.pulse || 72;
-
-  let score = 0;
-
-  // BMI scoring (healthy range gets higher score)
-  if (bmi >= 18.5 && bmi <= 24.9) score += 1;
-  else if (bmi >= 25 && bmi <= 29.9) score += 0.5;
-
-  // SpO2 scoring
-  if (spo2 >= 98) score += 1;
-  else if (spo2 >= 95) score += 0.5;
-
-  // Resting heart rate scoring
-  if (pulse >= 60 && pulse <= 80) score += 1;
-  else if (pulse >= 50 && pulse <= 90) score += 0.5;
-
-  // Convert to 1-3 scale
-  return Math.max(1, Math.min(3, Math.round(score)));
-}
 
 function calculateGrade(totalScore: number, completedStations: number): "Above Average" | "Average" | "Bad" {
   const maxPossibleScore = completedStations * 3;

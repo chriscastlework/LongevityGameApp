@@ -38,15 +38,14 @@ import {
 import { useRouter } from "next/navigation";
 import type { ScoringThreshold, StationType, AgeGroup, Gender, MetricName } from "@/lib/types/database";
 
-const STATION_TYPES: StationType[] = ["balance", "breath", "grip", "health"];
+const STATION_TYPES: StationType[] = ["balance", "breath", "grip"];
 const GENDERS: Gender[] = ["male", "female"];
 const AGE_GROUPS: AgeGroup[] = ["18-25", "26-35", "36-45", "46-55", "56-65", "65+"];
 
 const METRIC_NAMES: Record<StationType, MetricName[]> = {
   balance: ["balance_seconds"],
   breath: ["balloon_diameter_cm"],
-  grip: ["grip_seconds"],
-  health: ["bmi", "bp_systolic", "bp_diastolic", "pulse", "muscle_pct", "fat_pct", "spo2"]
+  grip: ["grip_seconds"]
 };
 
 interface ThresholdFormData {

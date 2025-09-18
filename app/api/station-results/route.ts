@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient, createRouteHandlerClient } from "@/lib/supabase/server";
-import type { StationType, BalanceMeasurement, BreathMeasurement, GripMeasurement, HealthMeasurement, StationResultInsert } from "@/lib/types/database";
+import type { StationType, BalanceMeasurement, BreathMeasurement, GripMeasurement, StationResultInsert } from "@/lib/types/database";
 import { calculateStationScore, type MeasurementData } from "@/lib/scoring/calculator";
 
 export const dynamic = "force-dynamic";

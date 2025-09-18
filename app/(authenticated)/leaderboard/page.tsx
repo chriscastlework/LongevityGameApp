@@ -165,7 +165,7 @@ export default function LeaderboardPage() {
           <CardHeader>
             <CardTitle>Rankings</CardTitle>
             <CardDescription>
-              Participants ranked by total score across all four fitness stations
+              Participants ranked by total score across all three fitness stations
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -186,7 +186,6 @@ export default function LeaderboardPage() {
                     <TableHead className="text-center">Balance</TableHead>
                     <TableHead className="text-center">Breath</TableHead>
                     <TableHead className="text-center">Grip</TableHead>
-                    <TableHead className="text-center">Health</TableHead>
                     <TableHead className="text-center">Total</TableHead>
                     <TableHead className="text-center">Grade</TableHead>
                     <TableHead>Date</TableHead>
@@ -232,11 +231,6 @@ export default function LeaderboardPage() {
                       </span>
                     </TableCell>
 
-                    <TableCell className="text-center">
-                      <span className={`font-medium ${getScoreColor(participant.score_health)}`}>
-                        {participant.score_health || "-"}
-                      </span>
-                    </TableCell>
 
                     <TableCell className="text-center">
                       <span className="text-lg font-bold">
@@ -288,19 +282,19 @@ export default function LeaderboardPage() {
                   </div>
                   <div className="flex justify-between">
                     <span>Total Score:</span>
-                    <span className="font-medium">4-12 points</span>
+                    <span className="font-medium">3-9 points</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Above Average:</span>
-                    <span className="font-medium text-green-600">10-12 points</span>
+                    <span className="font-medium text-green-600">8-9 points</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Average:</span>
-                    <span className="font-medium text-yellow-600">6-9 points</span>
+                    <span className="font-medium text-yellow-600">5-7 points</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Needs Improvement:</span>
-                    <span className="font-medium text-red-600">4-5 points</span>
+                    <span className="font-medium text-red-600">3-4 points</span>
                   </div>
                 </div>
               </div>
@@ -311,7 +305,6 @@ export default function LeaderboardPage() {
                   <div><strong>Balance:</strong> Stability and coordination</div>
                   <div><strong>Breath:</strong> Respiratory endurance</div>
                   <div><strong>Grip:</strong> Hand and forearm strength</div>
-                  <div><strong>Health:</strong> Vital signs and body composition</div>
                 </div>
               </div>
             </div>

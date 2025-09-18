@@ -78,7 +78,7 @@ export function useStation(stationId: string) {
   };
 }
 
-// Hook to get a specific station by type (balance, breath, grip, health)
+// Hook to get a specific station by type (balance, breath, grip)
 export function useStationByType(stationType: string) {
   const { data: stations, ...rest } = useStations();
 
