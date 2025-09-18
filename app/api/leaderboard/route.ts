@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import type { LeaderboardEntry } from "@/lib/types/database";
+import type { LeaderboardEntry, Gender } from "@/lib/types/database";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -60,11 +60,15 @@ export async function GET(request: NextRequest) {
     const leaderboardEntries = participants
       .filter((participant) => {
         const profile = profileMap.get(participant.user_id);
-        // Apply gender filter if provided
+        if (!profile) return false;
+        const g = profile.gender?.toLowerCase();
+        const isKnownGender = g === "male" || g === "female";
+        if (!isKnownGender) return false;
+        // Apply gender filter if provided (expects lowercase values or "all")
         if (genderFilter && genderFilter !== "all") {
-          return profile?.gender === genderFilter;
+          return g === genderFilter;
         }
-        return profile; // Only include participants that have profiles
+        return true;
       })
       .map((participant) => {
         const profile = profileMap.get(participant.user_id);
@@ -117,12 +121,14 @@ export async function GET(request: NextRequest) {
               ).toISOString()
             : new Date().toISOString();
 
+        const g = (profile?.gender || "").toLowerCase() as Gender;
+
         return {
           id: participant.id,
           participant_code: participant.participant_code,
           full_name: profile?.name || "Unknown",
           organization: profile?.organisation || null,
-          gender: profile?.gender,
+          gender: g,
           score_balance: scoreBalance,
           score_breath: scoreBreath,
           score_grip: scoreGrip,

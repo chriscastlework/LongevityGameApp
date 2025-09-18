@@ -576,7 +576,7 @@ export interface LeaderboardEntry {
   participant_code: string;
   full_name: string;
   organization: string | null;
-  gender: string;
+  gender: Gender;
   score_balance: number | null;
   score_breath: number | null;
   score_grip: number | null;
