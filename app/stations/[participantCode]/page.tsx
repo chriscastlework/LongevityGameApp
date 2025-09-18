@@ -294,7 +294,7 @@ export default function StationParticipantPage() {
                             <h3 className="font-semibold text-lg">
                               {station.name}
                             </h3>
-                            <p className="text-sm text-muted-foreground mt-1">
+                            <p className="text-sm text-muted-foreground mt-1 whitespace-normal break-words">
                               {station.description}
                             </p>
                           </div>

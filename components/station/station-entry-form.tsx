@@ -53,23 +53,23 @@ const gripSchema = z.object({
 
 const healthSchema = z.object({
   bp_systolic: z
-    .number()
+    .number({ required_error: "Systolic BP is required" })
     .min(50, "Systolic BP too low")
     .max(250, "Systolic BP too high"),
   bp_diastolic: z
-    .number()
+    .number({ required_error: "Diastolic BP is required" })
     .min(30, "Diastolic BP too low")
     .max(150, "Diastolic BP too high"),
   pulse: z
-    .number()
+    .number({ required_error: "Heart rate is required" })
     .min(30, "Heart rate too low")
     .max(200, "Heart rate too high"),
   spo2: z
-    .number()
+    .number({ required_error: "SpO₂ is required" })
     .min(70, "SpO₂ too low")
     .max(100, "SpO₂ cannot exceed 100%"),
   bmi: z
-    .number()
+    .number({ required_error: "BMI is required" })
     .min(10, "BMI too low")
     .max(60, "BMI too high"),
 });

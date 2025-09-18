@@ -4,8 +4,8 @@ import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 
 interface NumberInputProps {
-  value: number;
-  onChange: (value: number) => void;
+  value: number | null | undefined;
+  onChange: (value: number | null) => void;
   min?: number;
   max?: number;
   placeholder?: string;
@@ -26,41 +26,33 @@ export function NumberInput({
 
   // Initialize string value from the number
   useEffect(() => {
-    setStringValue(value > 0 ? value.toString() : "");
+    setStringValue(value != null ? value.toString() : "");
   }, [value]);
 
   const handleChange = (newValue: string) => {
-    // Allow empty string
-    if (newValue === "") {
-      setStringValue("");
-      onChange(0);
+    setStringValue(newValue);
+
+    // Allow empty string (null value)
+    if (newValue === "" || newValue === ".") {
+      onChange(null);
       return;
     }
 
-    // Only allow valid numbers
-    if (/^\d+$/.test(newValue)) {
-      const numValue = parseInt(newValue);
-      if (numValue >= min && numValue <= max) {
-        setStringValue(newValue);
+    // Only allow valid number patterns (including decimals and partial decimals)
+    if (/^\d*\.?\d*$/.test(newValue)) {
+      const numValue = parseFloat(newValue);
+      if (!isNaN(numValue)) {
         onChange(numValue);
       }
     }
   };
 
   const handleBlur = () => {
-    // If empty on blur, keep it empty (which represents 0)
-    if (stringValue === "") {
-      return;
-    }
-
-    // Ensure the value is within bounds
-    const numValue = parseInt(stringValue);
-    if (numValue < min) {
-      setStringValue(min.toString());
-      onChange(min);
-    } else if (numValue > max) {
-      setStringValue(max.toString());
-      onChange(max);
+    // Don't validate on blur, let form validation handle it
+    // Just clean up the display value if it's invalid
+    if (stringValue === "" || stringValue === ".") {
+      setStringValue("");
+      onChange(null);
     }
   };
 
