@@ -1,9 +1,23 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default function HomePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Check if this is a password reset redirect
+    const hash = window.location.hash;
+    if (hash.includes("access_token") && hash.includes("type=recovery")) {
+      // Redirect to reset password page with the hash
+      router.push(`/auth/reset-password${hash}`);
+    }
+  }, [router]);
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-background">
       {/* Background Image */}
