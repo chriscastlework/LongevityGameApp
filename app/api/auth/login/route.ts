@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createRouteHandlerClient, createAdminClient } from "@/lib/supabase/server";
 
+export const runtime = 'edge';
+
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
   try {
     const body = await request.json();
     const { email, password } = body;
@@ -67,33 +70,31 @@ export async function POST(request: NextRequest) {
 
     console.log("User authenticated:", authData.user.id);
 
-    // Get user profile and participant data using regular client
+    // Get user profile and participant data in a single optimized query
     try {
-      // Fetch user profile
-      const { data: profile, error: profileError } = await supabase
+      // Use a single query with join to fetch both profile and participant data
+      const { data: userDataResult, error: fetchError } = await supabase
         .from("profiles")
-        .select("*")
+        .select(`
+          *,
+          participants (*)
+        `)
         .eq("id", authData.user.id)
         .single();
 
-      if (profileError) {
-        console.error("Profile fetch error:", profileError);
-        // Profile might not exist, that's OK for now
+      let profile = null;
+      let participant = null;
+
+      if (fetchError) {
+        console.error("User data fetch error:", fetchError);
+        // If profile doesn't exist, that's OK for now
+      } else if (userDataResult) {
+        profile = userDataResult;
+        participant = userDataResult.participants?.[0] || null;
       }
 
-      // Fetch participant record
-      const { data: participant, error: participantError } = await supabase
-        .from("participants")
-        .select("*")
-        .eq("user_id", authData.user.id)
-        .single();
-
-      if (participantError) {
-        console.error("Participant fetch error:", participantError);
-        // Participant might not exist, that's OK for now
-      }
-
-      console.log("Login successful for user:", authData.user.id);
+      const duration = Date.now() - startTime;
+      console.log(`Login successful for user: ${authData.user.id} (${duration}ms)`);
 
       // Set the session in cookies for the user
       const supabaseForSession = await createRouteHandlerClient();
