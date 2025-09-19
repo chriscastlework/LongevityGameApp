@@ -9,7 +9,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -27,12 +35,29 @@ import {
   Users,
   Activity,
   AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  ArrowUpDown,
 } from "lucide-react";
-import { useLeaderboard } from "@/lib/hooks/useLeaderboard";
+import { usePaginatedStationResults } from "@/lib/hooks/usePaginatedStationResults";
 import { useStationsWithStorage } from "@/lib/hooks/useStationsWithStorage";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import type { Grade } from "@/lib/types/database";
+
+function calculateGrade(
+  totalScore: number,
+  completedStations: number
+): "Above Average" | "Average" | "Bad" {
+  if (completedStations === 0) return "Bad";
+  const maxPossibleScore = completedStations * 3;
+  const percentage = (totalScore / maxPossibleScore) * 100;
+
+  if (percentage >= 83) return "Above Average";
+  if (percentage >= 50) return "Average";
+  return "Bad";
+}
 
 function getRankIcon(rank: number) {
   switch (rank) {
@@ -72,8 +97,23 @@ function getScoreColor(score: number | null): string {
 }
 
 export default function LeaderboardPage() {
-  const [filter, setFilter] = useState<"all" | "male" | "female">("all");
-  const { data, isLoading, error, refetch } = useLeaderboard(filter);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState("total_score");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [nameFilter, setNameFilter] = useState("");
+  const [orgFilter, setOrgFilter] = useState("");
+  const [searchName, setSearchName] = useState("");
+  const [searchOrg, setSearchOrg] = useState("");
+  const itemsPerPage = 10;
+
+  const { data, isLoading, error, refetch } = usePaginatedStationResults({
+    limit: itemsPerPage,
+    offset: (currentPage - 1) * itemsPerPage,
+    sort: sortBy,
+    order: sortOrder,
+    nameFilter,
+    orgFilter,
+  });
   const {
     data: stations,
     isLoading: stationsLoading,
@@ -83,18 +123,81 @@ export default function LeaderboardPage() {
   // Auto-refresh every minute
   useEffect(() => {
     const interval = setInterval(() => {
-      refetch(filter);
+      refetch();
     }, 60000); // 60 seconds
 
     return () => clearInterval(interval);
-  }, [refetch, filter]);
+  }, [refetch]);
 
-  const leaderboardData = data?.leaderboard || [];
-  const stats = data?.stats || {
-    totalParticipants: 0,
-    avgScore: 0,
-    aboveAverage: 0,
-    topOrganization: "None",
+  // Handle search with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setNameFilter(searchName);
+      setOrgFilter(searchOrg);
+      setCurrentPage(1); // Reset to first page when filtering
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchName, searchOrg]);
+
+  // Reset page when sort changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [sortBy, sortOrder]);
+
+  const results = data?.results || [];
+  const pagination = data?.pagination || {
+    total: 0,
+    limit: itemsPerPage,
+    offset: 0,
+    hasMore: false,
+  };
+
+  const totalPages = Math.ceil(pagination.total / itemsPerPage);
+  const hasNextPage = currentPage < totalPages;
+  const hasPrevPage = currentPage > 1;
+
+  // Calculate stats from current page data
+  const stats = {
+    totalParticipants: pagination.total,
+    avgScore:
+      results.length > 0
+        ? Math.round(
+            (results.reduce((sum, r) => sum + r.total_score, 0) /
+              results.length) *
+              10
+          ) / 10
+        : 0,
+    aboveAverage: results.filter((r) => r.total_score >= 10).length,
+    topOrganization:
+      results.length > 0
+        ? results.reduce((acc, r) => {
+            if (!r.organisation) return acc;
+            const count = (acc[r.organisation] || 0) + 1;
+            return { ...acc, [r.organisation]: count };
+          }, {} as Record<string, number>)
+        : {},
+  };
+
+  const topOrgName =
+    Object.entries(stats.topOrganization).length > 0
+      ? Object.entries(stats.topOrganization).sort(
+          ([, a], [, b]) => b - a
+        )[0]?.[0] || "None"
+      : "None";
+
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(field);
+      setSortOrder("desc");
+    }
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortBy !== field) return <ArrowUpDown className="h-4 w-4 opacity-50" />;
+    return sortOrder === "asc" ? "↑" : "↓";
   };
 
   return (
@@ -174,25 +277,70 @@ export default function LeaderboardPage() {
                   <p className="text-sm text-muted-foreground">
                     Top Organization
                   </p>
-                  <p className="text-lg font-bold">{stats.topOrganization}</p>
+                  <p className="text-lg font-bold">{topOrgName}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Filters */}
-        <Tabs
-          value={filter}
-          onValueChange={(value) => setFilter(value as typeof filter)}
-          className="mb-6"
-        >
-          <TabsList>
-            <TabsTrigger value="all">All Participants</TabsTrigger>
-            <TabsTrigger value="male">Male</TabsTrigger>
-            <TabsTrigger value="female">Female</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {/* Search and Sort Controls */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Search & Filter</CardTitle>
+            <CardDescription>
+              Search by name or organization, and sort results
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name..."
+                    value={searchName}
+                    onChange={(e) => setSearchName(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <div className="flex-1">
+                <Input
+                  placeholder="Search by organization..."
+                  value={searchOrg}
+                  onChange={(e) => setSearchOrg(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="total_score">Total Score</SelectItem>
+                    <SelectItem value="rank">Rank</SelectItem>
+                    <SelectItem value="balance">Balance</SelectItem>
+                    <SelectItem value="breath">Breath</SelectItem>
+                    <SelectItem value="grip">Grip</SelectItem>
+                    <SelectItem value="health">Health</SelectItem>
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="organisation">Organization</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() =>
+                    setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                  }
+                >
+                  {sortOrder === "asc" ? "↑" : "↓"}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Leaderboard Table */}
         <Card>
@@ -215,113 +363,229 @@ export default function LeaderboardPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-16">Rank</TableHead>
-                    <TableHead>Participant</TableHead>
-                    <TableHead>Organization</TableHead>
-                    <TableHead className="text-center">Balance</TableHead>
-                    <TableHead className="text-center">Breath</TableHead>
-                    <TableHead className="text-center">Grip</TableHead>
-                    <TableHead className="text-center">Health</TableHead>
-                    <TableHead className="text-center">Total</TableHead>
+                    <TableHead className="w-16">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSort("rank")}
+                      >
+                        Rank {getSortIcon("rank")}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSort("name")}
+                      >
+                        Participant {getSortIcon("name")}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSort("organisation")}
+                      >
+                        Organization {getSortIcon("organisation")}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSort("balance")}
+                      >
+                        Balance {getSortIcon("balance")}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSort("breath")}
+                      >
+                        Breath {getSortIcon("breath")}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSort("grip")}
+                      >
+                        Grip {getSortIcon("grip")}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSort("health")}
+                      >
+                        Health {getSortIcon("health")}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSort("total_score")}
+                      >
+                        Total {getSortIcon("total_score")}
+                      </Button>
+                    </TableHead>
                     <TableHead className="text-center">Grade</TableHead>
-                    <TableHead>Date</TableHead>
+                    <TableHead>Completed</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {leaderboardData.map((participant) => (
-                    <TableRow
-                      key={participant.id}
-                      className="hover:bg-muted/50"
-                    >
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          {getRankIcon(participant.rank)}
-                        </div>
-                      </TableCell>
+                  {results.map((participant) => {
+                    const grade = calculateGrade(
+                      participant.total_score,
+                      participant.completed_stations
+                    );
+                    return (
+                      <TableRow
+                        key={participant.id}
+                        className="hover:bg-muted/50"
+                      >
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {getRankIcon(participant.rank)}
+                          </div>
+                        </TableCell>
 
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{participant.full_name}</p>
-                        </div>
-                      </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{participant.name}</p>
+                          </div>
+                        </TableCell>
 
-                      <TableCell className="text-sm">
-                        {participant.organization || "-"}
-                      </TableCell>
+                        <TableCell className="text-sm">
+                          {participant.organisation || "-"}
+                        </TableCell>
 
-                      <TableCell className="text-center">
-                        <span
-                          className={`font-medium ${getScoreColor(
-                            participant.score_balance
-                          )}`}
-                        >
-                          {participant.score_balance || "-"}
-                        </span>
-                      </TableCell>
+                        <TableCell className="text-center">
+                          <span
+                            className={`font-medium ${getScoreColor(
+                              participant.balance
+                            )}`}
+                          >
+                            {participant.balance || "-"}
+                          </span>
+                        </TableCell>
 
-                      <TableCell className="text-center">
-                        <span
-                          className={`font-medium ${getScoreColor(
-                            participant.score_breath
-                          )}`}
-                        >
-                          {participant.score_breath || "-"}
-                        </span>
-                      </TableCell>
+                        <TableCell className="text-center">
+                          <span
+                            className={`font-medium ${getScoreColor(
+                              participant.breath
+                            )}`}
+                          >
+                            {participant.breath || "-"}
+                          </span>
+                        </TableCell>
 
-                      <TableCell className="text-center">
-                        <span
-                          className={`font-medium ${getScoreColor(
-                            participant.score_grip
-                          )}`}
-                        >
-                          {participant.score_grip || "-"}
-                        </span>
-                      </TableCell>
+                        <TableCell className="text-center">
+                          <span
+                            className={`font-medium ${getScoreColor(
+                              participant.grip
+                            )}`}
+                          >
+                            {participant.grip || "-"}
+                          </span>
+                        </TableCell>
 
-                      <TableCell className="text-center">
-                        <span
-                          className={`font-medium ${getScoreColor(
-                            participant.score_health
-                          )}`}
-                        >
-                          {participant.score_health || "-"}
-                        </span>
-                      </TableCell>
+                        <TableCell className="text-center">
+                          <span
+                            className={`font-medium ${getScoreColor(
+                              participant.health
+                            )}`}
+                          >
+                            {participant.health || "-"}
+                          </span>
+                        </TableCell>
 
-                      <TableCell className="text-center">
-                        <span className="text-lg font-bold">
-                          {participant.total_score || "-"}
-                        </span>
-                      </TableCell>
+                        <TableCell className="text-center">
+                          <span className="text-lg font-bold">
+                            {participant.total_score || "-"}
+                          </span>
+                        </TableCell>
 
-                      <TableCell className="text-center">
-                        <Badge
-                          variant={getGradeBadgeVariant(participant.grade)}
-                        >
-                          {participant.grade || "-"}
-                        </Badge>
-                      </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={getGradeBadgeVariant(grade)}>
+                            {grade || "-"}
+                          </Badge>
+                        </TableCell>
 
-                      <TableCell className="text-sm text-muted-foreground">
-                        {new Date(participant.created_at).toLocaleDateString()}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        <TableCell className="text-sm text-muted-foreground">
+                          <div>
+                            <p>{participant.completed_stations}/4 stations</p>
+                            <p className="text-xs">
+                              {new Date(
+                                participant.latest_completion
+                              ).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}
 
-            {!isLoading && leaderboardData.length === 0 && !error && (
+            {!isLoading && results.length === 0 && !error && (
               <div className="text-center py-8 text-muted-foreground">
                 <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>
                   No participants found
-                  {filter !== "all" ? " for the selected filter" : ""}
+                  {nameFilter || orgFilter ? " for the selected filters" : ""}
                 </p>
                 <p className="text-sm mt-2">
-                  Complete your fitness assessment to appear on the leaderboard!
+                  {nameFilter || orgFilter
+                    ? "Try adjusting your search criteria"
+                    : "Complete your fitness assessment to appear on the leaderboard!"}
                 </p>
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {!isLoading && results.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t">
+                <div className="text-sm text-muted-foreground">
+                  Showing {pagination.offset + 1} to{" "}
+                  {Math.min(
+                    pagination.offset + pagination.limit,
+                    pagination.total
+                  )}{" "}
+                  of {pagination.total} results
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={!hasPrevPage}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={!hasNextPage}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
