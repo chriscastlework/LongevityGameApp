@@ -173,6 +173,15 @@ export function LoginForm({ onSuccess, className }: LoginFormProps) {
       {/* Links */}
       <div className="text-center mt-6 space-y-2">
         <p className="text-sm text-muted-foreground">
+          <button
+            type="button"
+            className="text-primary hover:underline font-medium"
+            onClick={() => router.push("/auth/forgot-password")}
+          >
+            Forgot your password?
+          </button>
+        </p>
+        <p className="text-sm text-muted-foreground">
           Don't have an account?{" "}
           <button
             type="button"
