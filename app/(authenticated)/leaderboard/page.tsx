@@ -76,7 +76,11 @@ function getScoreColor(score: number | null): string {
 export default function LeaderboardPage() {
   const [filter, setFilter] = useState<"all" | "male" | "female">("all");
   const { data, isLoading, error, refetch } = useLeaderboard(filter);
-  const { data: stations, isLoading: stationsLoading, isCached } = useStationsWithStorage();
+  const {
+    data: stations,
+    isLoading: stationsLoading,
+    isCached,
+  } = useStationsWithStorage();
 
   const handleRefresh = async () => {
     await refetch(filter);
@@ -103,9 +107,6 @@ export default function LeaderboardPage() {
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
               Longevity Game Leaderboard
             </h1>
-            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300">
-              Live results and rankings
-            </p>
           </div>
           <Button
             onClick={handleRefresh}
@@ -255,9 +256,6 @@ export default function LeaderboardPage() {
                       <TableCell>
                         <div>
                           <p className="font-medium">{participant.full_name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {participant.participant_code}
-                          </p>
                         </div>
                       </TableCell>
 
@@ -362,7 +360,9 @@ export default function LeaderboardPage() {
                 <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center mx-auto mb-2">
                   <div className="w-3 h-3 bg-muted-foreground rounded-full animate-pulse" />
                 </div>
-                <p className="text-sm text-muted-foreground">Loading scoring guide...</p>
+                <p className="text-sm text-muted-foreground">
+                  Loading scoring guide...
+                </p>
               </div>
             ) : (
               <div className="grid md:grid-cols-2 gap-6">
@@ -376,31 +376,43 @@ export default function LeaderboardPage() {
                     <div className="flex justify-between">
                       <span>Total Score:</span>
                       <span className="font-medium">
-                        {stations?.length ? `${stations.length}-${stations.length * 3}` : "4-12"} points
+                        {stations?.length
+                          ? `${stations.length}-${stations.length * 3}`
+                          : "4-12"}{" "}
+                        points
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Above Average:</span>
                       <span className="font-medium text-green-600">
                         {stations?.length
-                          ? `${Math.ceil((stations.length * 3) * 0.83)}-${stations.length * 3}`
-                          : "10-12"} points
+                          ? `${Math.ceil(stations.length * 3 * 0.83)}-${
+                              stations.length * 3
+                            }`
+                          : "10-12"}{" "}
+                        points
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Average:</span>
                       <span className="font-medium text-yellow-600">
                         {stations?.length
-                          ? `${Math.ceil((stations.length * 3) * 0.5)}-${Math.floor((stations.length * 3) * 0.82)}`
-                          : "6-9"} points
+                          ? `${Math.ceil(
+                              stations.length * 3 * 0.5
+                            )}-${Math.floor(stations.length * 3 * 0.82)}`
+                          : "6-9"}{" "}
+                        points
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Needs Improvement:</span>
                       <span className="font-medium text-red-600">
                         {stations?.length
-                          ? `${stations.length}-${Math.floor((stations.length * 3) * 0.49)}`
-                          : "4-5"} points
+                          ? `${stations.length}-${Math.floor(
+                              stations.length * 3 * 0.49
+                            )}`
+                          : "4-5"}{" "}
+                        points
                       </span>
                     </div>
                   </div>
@@ -411,7 +423,9 @@ export default function LeaderboardPage() {
                   <div className="space-y-2 text-sm">
                     {stations && stations.length > 0 ? (
                       stations
-                        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+                        .sort(
+                          (a, b) => (a.sort_order || 0) - (b.sort_order || 0)
+                        )
                         .map((station) => (
                           <div key={station.id}>
                             <strong>{station.name}:</strong>{" "}
