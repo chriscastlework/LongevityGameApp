@@ -4,8 +4,9 @@ import type React from "react"
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,11 +14,20 @@ import { Label } from "@/components/ui/label"
 import { createClient } from "@/lib/supabase/client"
 import { Mail, ArrowLeft } from "lucide-react"
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordContent() {
   const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    // Check for error message from reset-password redirect
+    const errorFromUrl = searchParams.get('error')
+    if (errorFromUrl) {
+      setError(errorFromUrl)
+    }
+  }, [searchParams])
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -113,5 +123,24 @@ export default function ForgotPasswordPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mb-2">
+              <div className="w-4 h-4 bg-primary-foreground rounded-full" />
+            </div>
+            <div className="text-sm text-muted-foreground">Loading...</div>
+          </div>
+        </div>
+      }
+    >
+      <ForgotPasswordContent />
+    </Suspense>
   )
 }

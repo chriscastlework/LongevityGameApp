@@ -29,23 +29,36 @@ function ResetPasswordContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Check if we have the necessary tokens from the URL hash
-    const hash = window.location.hash.substring(1); // Remove the # symbol
-    const hashParams = new URLSearchParams(hash);
-    const accessToken = hashParams.get("access_token");
-    const refreshToken = hashParams.get("refresh_token");
+    const verifyResetToken = async () => {
+      // Get token and type from URL query parameters
+      const token = searchParams.get('token');
+      const type = searchParams.get('type');
 
-    if (accessToken && refreshToken) {
-      // Set the session with the tokens
-      const supabase = createClient();
-      supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      });
-    } else {
-      router.push("/auth/forgot-password");
-    }
-  }, [router]);
+      if (token && type === 'recovery') {
+        try {
+          const supabase = createClient();
+          const { error } = await supabase.auth.verifyOtp({
+            token_hash: token,
+            type: 'recovery'
+          });
+
+          if (error) {
+            console.error('Error verifying reset token:', error);
+            router.push("/auth/forgot-password?error=Invalid or expired reset link");
+          }
+          // If successful, the user is now authenticated and can reset their password
+        } catch (error) {
+          console.error('Error verifying reset token:', error);
+          router.push("/auth/forgot-password?error=Invalid or expired reset link");
+        }
+      } else {
+        // No valid reset token, redirect to forgot password
+        router.push("/auth/forgot-password");
+      }
+    };
+
+    verifyResetToken();
+  }, [router, searchParams]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
