@@ -32,21 +32,21 @@ import type {
 // Schemas for each station type
 const balanceSchema = z.object({
   balance_seconds: z
-    .number()
+    .number({ required_error: "Balance time is required" })
     .min(0, "Balance time cannot be negative")
     .max(60, "Balance time cannot exceed 60 seconds"),
 });
 
 const breathSchema = z.object({
   balloon_diameter_cm: z
-    .number()
+    .number({ required_error: "Balloon diameter is required" })
     .min(0, "Balloon diameter cannot be negative")
     .max(100, "Balloon diameter cannot exceed 100cm"),
 });
 
 const gripSchema = z.object({
   grip_seconds: z
-    .number()
+    .number({ required_error: "Grip time is required" })
     .min(0, "Grip time cannot be negative")
     .max(600, "Grip time cannot exceed 10 minutes"),
 });
@@ -97,17 +97,17 @@ export function StationEntryForm({
       case "balance":
         return {
           schema: balanceSchema,
-          defaults: { balance_seconds: 0 },
+          defaults: { balance_seconds: null },
         };
       case "breath":
         return {
           schema: breathSchema,
-          defaults: { balloon_diameter_cm: 0 },
+          defaults: { balloon_diameter_cm: null },
         };
       case "grip":
         return {
           schema: gripSchema,
-          defaults: { grip_seconds: 0 },
+          defaults: { grip_seconds: null },
         };
       case "health":
         return {
@@ -155,7 +155,7 @@ export function StationEntryForm({
           <FormLabel>Balance Time</FormLabel>
           <FormControl>
             <TimeInput
-              value={field.value || 0}
+              value={field.value}
               onChange={field.onChange}
               placeholder="0:00"
               maxMinutes={1}
@@ -179,7 +179,7 @@ export function StationEntryForm({
           <FormLabel>Balloon Diameter (cm)</FormLabel>
           <FormControl>
             <NumberInput
-              value={field.value || 0}
+              value={field.value}
               onChange={field.onChange}
               min={0}
               max={100}
@@ -204,7 +204,7 @@ export function StationEntryForm({
           <FormLabel>Grip Strength Time</FormLabel>
           <FormControl>
             <TimeInput
-              value={field.value || 0}
+              value={field.value}
               onChange={field.onChange}
               placeholder="0:00"
               maxMinutes={10}
@@ -291,7 +291,7 @@ export function StationEntryForm({
                 <FormLabel>Heart Rate (bpm)</FormLabel>
                 <FormControl>
                   <NumberInput
-                    value={field.value || 70}
+                    value={field.value}
                     onChange={field.onChange}
                     min={30}
                     max={200}
@@ -314,7 +314,7 @@ export function StationEntryForm({
                 <FormLabel>SpO₂ (%)</FormLabel>
                 <FormControl>
                   <NumberInput
-                    value={field.value || 98}
+                    value={field.value}
                     onChange={field.onChange}
                     min={70}
                     max={100}
@@ -342,7 +342,7 @@ export function StationEntryForm({
               <FormLabel>BMI</FormLabel>
               <FormControl>
                 <NumberInput
-                  value={field.value || 22}
+                  value={field.value}
                   onChange={field.onChange}
                   min={10}
                   max={60}

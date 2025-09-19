@@ -30,21 +30,22 @@ export function NumberInput({
   }, [value]);
 
   const handleChange = (newValue: string) => {
-    setStringValue(newValue);
-
     // Allow empty string (null value)
     if (newValue === "" || newValue === ".") {
+      setStringValue(newValue);
       onChange(null);
       return;
     }
 
     // Only allow valid number patterns (including decimals and partial decimals)
     if (/^\d*\.?\d*$/.test(newValue)) {
+      setStringValue(newValue);
       const numValue = parseFloat(newValue);
       if (!isNaN(numValue)) {
         onChange(numValue);
       }
     }
+    // If invalid input, don't update stringValue - this prevents letters from showing
   };
 
   const handleBlur = () => {
