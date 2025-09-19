@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -9,7 +9,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -24,7 +23,6 @@ import {
   Trophy,
   Medal,
   Award,
-  RefreshCw,
   TrendingUp,
   Users,
   Activity,
@@ -34,7 +32,7 @@ import { useLeaderboard } from "@/lib/hooks/useLeaderboard";
 import { useStationsWithStorage } from "@/lib/hooks/useStationsWithStorage";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-import type { LeaderboardEntry, Grade } from "@/lib/types/database";
+import type { Grade } from "@/lib/types/database";
 
 function getRankIcon(rank: number) {
   switch (rank) {
@@ -82,9 +80,14 @@ export default function LeaderboardPage() {
     isCached,
   } = useStationsWithStorage();
 
-  const handleRefresh = async () => {
-    await refetch(filter);
-  };
+  // Auto-refresh every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetch(filter);
+    }, 60000); // 60 seconds
+
+    return () => clearInterval(interval);
+  }, [refetch, filter]);
 
   const leaderboardData = data?.leaderboard || [];
   const stats = data?.stats || {
@@ -102,22 +105,10 @@ export default function LeaderboardPage() {
     >
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-              Longevity Game Leaderboard
-            </h1>
-          </div>
-          <Button
-            onClick={handleRefresh}
-            disabled={isLoading}
-            className="gap-2 self-start sm:self-auto"
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
-            />
-            Refresh
-          </Button>
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+            Longevity Game Leaderboard
+          </h1>
         </div>
 
         {/* Error Alert */}
@@ -126,14 +117,9 @@ export default function LeaderboardPage() {
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               Failed to load leaderboard data: {error}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                className="ml-4"
-              >
-                Try Again
-              </Button>
+              <span className="text-sm block mt-2">
+                The page will automatically retry in the next refresh cycle.
+              </span>
             </AlertDescription>
           </Alert>
         )}
