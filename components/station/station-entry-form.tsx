@@ -7,7 +7,6 @@ import { z } from "zod";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Form,
@@ -78,7 +77,11 @@ interface StationEntryFormProps {
   station: StationType;
   participantCode: string;
   onSubmit: (
-    data: BalanceMeasurement | BreathMeasurement | GripMeasurement | HealthMeasurement
+    data:
+      | BalanceMeasurement
+      | BreathMeasurement
+      | GripMeasurement
+      | HealthMeasurement
   ) => void;
   isSubmitting?: boolean;
 }
@@ -117,7 +120,7 @@ export function StationEntryForm({
             bp_diastolic: null,
             pulse: null,
             spo2: null,
-            bmi: null
+            bmi: null,
           },
         };
       default:
@@ -134,7 +137,6 @@ export function StationEntryForm({
     resolver: zodResolver(schema),
     defaultValues: defaults,
   });
-
 
   const handleSubmit = async (data: any) => {
     setError(null);
@@ -183,7 +185,6 @@ export function StationEntryForm({
               onChange={field.onChange}
               min={0}
               max={100}
-              placeholder="25"
             />
           </FormControl>
           <FormDescription>
@@ -206,7 +207,6 @@ export function StationEntryForm({
             <TimeInput
               value={field.value}
               onChange={field.onChange}
-              placeholder="0:00"
               maxMinutes={10}
             />
           </FormControl>
@@ -243,7 +243,6 @@ export function StationEntryForm({
                     onChange={field.onChange}
                     min={50}
                     max={250}
-                    placeholder="120"
                   />
                 </FormControl>
                 <FormDescription>
@@ -266,7 +265,6 @@ export function StationEntryForm({
                     onChange={field.onChange}
                     min={30}
                     max={150}
-                    placeholder="80"
                   />
                 </FormControl>
                 <FormDescription>
@@ -295,7 +293,6 @@ export function StationEntryForm({
                     onChange={field.onChange}
                     min={30}
                     max={200}
-                    placeholder="70"
                   />
                 </FormControl>
                 <FormDescription>
@@ -318,7 +315,6 @@ export function StationEntryForm({
                     onChange={field.onChange}
                     min={70}
                     max={100}
-                    placeholder="98"
                   />
                 </FormControl>
                 <FormDescription>
@@ -346,12 +342,12 @@ export function StationEntryForm({
                   onChange={field.onChange}
                   min={10}
                   max={60}
-                  placeholder="22.0"
                   step={0.1}
                 />
               </FormControl>
               <FormDescription>
-                Above Average: 18.5-24.9, Average: 25-29.9, Bad: &ge;30 or &lt;18.5
+                Above Average: 18.5-24.9, Average: 25-29.9, Bad: &ge;30 or
+                &lt;18.5
               </FormDescription>
               <FormMessage />
             </FormItem>
