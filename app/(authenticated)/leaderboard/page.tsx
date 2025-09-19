@@ -31,6 +31,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useLeaderboard } from "@/lib/hooks/useLeaderboard";
+import { useStationsWithStorage } from "@/lib/hooks/useStationsWithStorage";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import type { LeaderboardEntry, Grade } from "@/lib/types/database";
@@ -75,6 +76,7 @@ function getScoreColor(score: number | null): string {
 export default function LeaderboardPage() {
   const [filter, setFilter] = useState<"all" | "male" | "female">("all");
   const { data, isLoading, error, refetch } = useLeaderboard(filter);
+  const { data: stations, isLoading: stationsLoading, isCached } = useStationsWithStorage();
 
   const handleRefresh = async () => {
     await refetch(filter);
@@ -341,61 +343,90 @@ export default function LeaderboardPage() {
           </CardContent>
         </Card>
 
-        {/* Scoring Guide */}
+        {/* Dynamic Scoring Guide */}
         <Card className="mt-8">
           <CardHeader>
             <CardTitle>Scoring Guide</CardTitle>
             <CardDescription>
               Understanding the fitness assessment scores
+              {isCached && (
+                <span className="text-xs text-muted-foreground ml-2">
+                  (using cached data)
+                </span>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-semibold mb-3">Score Ranges</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Each Station:</span>
-                    <span className="font-medium">1-3 points</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Total Score:</span>
-                    <span className="font-medium">3-9 points</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Above Average:</span>
-                    <span className="font-medium text-green-600">
-                      8-9 points
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Average:</span>
-                    <span className="font-medium text-yellow-600">
-                      5-7 points
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Needs Improvement:</span>
-                    <span className="font-medium text-red-600">3-4 points</span>
+            {stationsLoading && !isCached ? (
+              <div className="text-center py-8">
+                <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center mx-auto mb-2">
+                  <div className="w-3 h-3 bg-muted-foreground rounded-full animate-pulse" />
+                </div>
+                <p className="text-sm text-muted-foreground">Loading scoring guide...</p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold mb-3">Score Ranges</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Each Station:</span>
+                      <span className="font-medium">1-3 points</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total Score:</span>
+                      <span className="font-medium">
+                        {stations?.length ? `${stations.length}-${stations.length * 3}` : "4-12"} points
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Above Average:</span>
+                      <span className="font-medium text-green-600">
+                        {stations?.length
+                          ? `${Math.ceil((stations.length * 3) * 0.83)}-${stations.length * 3}`
+                          : "10-12"} points
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Average:</span>
+                      <span className="font-medium text-yellow-600">
+                        {stations?.length
+                          ? `${Math.ceil((stations.length * 3) * 0.5)}-${Math.floor((stations.length * 3) * 0.82)}`
+                          : "6-9"} points
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Needs Improvement:</span>
+                      <span className="font-medium text-red-600">
+                        {stations?.length
+                          ? `${stations.length}-${Math.floor((stations.length * 3) * 0.49)}`
+                          : "4-5"} points
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <h4 className="font-semibold mb-3">Test Stations</h4>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <strong>Balance:</strong> Stability and coordination
-                  </div>
-                  <div>
-                    <strong>Breath:</strong> Respiratory endurance
-                  </div>
-                  <div>
-                    <strong>Grip:</strong> Hand and forearm strength
+                <div>
+                  <h4 className="font-semibold mb-3">Test Stations</h4>
+                  <div className="space-y-2 text-sm">
+                    {stations && stations.length > 0 ? (
+                      stations
+                        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+                        .map((station) => (
+                          <div key={station.id}>
+                            <strong>{station.name}:</strong>{" "}
+                            {station.description || "Fitness assessment"}
+                          </div>
+                        ))
+                    ) : (
+                      <div className="text-muted-foreground">
+                        Loading station information...
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
