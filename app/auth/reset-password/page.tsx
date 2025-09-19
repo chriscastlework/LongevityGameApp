@@ -29,35 +29,78 @@ function ResetPasswordContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const verifyResetToken = async () => {
-      // Get token and type from URL query parameters
-      const token = searchParams.get('token');
-      const type = searchParams.get('type');
+    const verifyAuthAndToken = async () => {
+      const supabase = createClient();
 
-      if (token && type === 'recovery') {
-        try {
-          const supabase = createClient();
-          const { error } = await supabase.auth.verifyOtp({
-            token_hash: token,
-            type: 'recovery'
-          });
+      try {
+        // First check if user is already authenticated from session
+        const { data: { session } } = await supabase.auth.getSession();
 
-          if (error) {
+        if (session?.user) {
+          // User is already authenticated, allow password reset
+          console.log('User is authenticated, allowing password reset');
+          return;
+        }
+
+        // Listen for auth state changes (this handles the Supabase redirect flow)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            if (event === 'PASSWORD_RECOVERY') {
+              console.log('Password recovery event detected');
+              // User is now authenticated via recovery link
+              return;
+            }
+
+            if (session?.user) {
+              console.log('User authenticated via auth state change');
+              return;
+            }
+          }
+        );
+
+        // If no session and no auth state change, check for manual token verification
+        const token = searchParams.get('token');
+        const type = searchParams.get('type');
+
+        if (token && type === 'recovery') {
+          try {
+            const { error } = await supabase.auth.verifyOtp({
+              token_hash: token,
+              type: 'recovery'
+            });
+
+            if (error) {
+              console.error('Error verifying reset token:', error);
+              router.push("/auth/forgot-password?error=Invalid or expired reset link");
+              return;
+            }
+          } catch (error) {
             console.error('Error verifying reset token:', error);
             router.push("/auth/forgot-password?error=Invalid or expired reset link");
+            return;
           }
-          // If successful, the user is now authenticated and can reset their password
-        } catch (error) {
-          console.error('Error verifying reset token:', error);
-          router.push("/auth/forgot-password?error=Invalid or expired reset link");
         }
-      } else {
-        // No valid reset token, redirect to forgot password
+
+        // If we reach here and no session/token, we need to wait a bit for auth state
+        // Sometimes the auth state change takes a moment
+        setTimeout(async () => {
+          const { data: { session: laterSession } } = await supabase.auth.getSession();
+          if (!laterSession?.user) {
+            router.push("/auth/forgot-password");
+          }
+        }, 1000);
+
+        // Cleanup subscription
+        return () => {
+          subscription?.unsubscribe();
+        };
+      } catch (error) {
+        console.error('Error in auth verification:', error);
         router.push("/auth/forgot-password");
       }
     };
 
-    verifyResetToken();
+    verifyAuthAndToken();
   }, [router, searchParams]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
