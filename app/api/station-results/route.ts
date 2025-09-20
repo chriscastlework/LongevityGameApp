@@ -310,19 +310,8 @@ export async function GET(request: NextRequest) {
     // Now use admin client for database operations
     const supabase = createAdminClient();
 
-    // Check if user has operator or admin role
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile || (profile.role !== "operator" && profile.role !== "admin")) {
-      return NextResponse.json(
-        { error: "Insufficient permissions. Operator or admin role required." },
-        { status: 403 }
-      );
-    }
+    // Note: Leaderboard is accessible to all authenticated users
+    // No role restriction needed for viewing results
 
     // Parse query parameters
     const url = new URL(request.url);
